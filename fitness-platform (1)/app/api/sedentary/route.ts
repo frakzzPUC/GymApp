@@ -17,44 +17,69 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id
     const body = await req.json()
+    console.log("Dados recebidos na API:", body)
+
     const { gender, weight, height, daysPerWeek, timePerDay } = body
 
     // Validação básica
     if (!gender || !weight || !height || !daysPerWeek || !timePerDay) {
-      return NextResponse.json({ success: false, message: "Todos os campos são obrigatórios" }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Todos os campos são obrigatórios",
+        },
+        { status: 400 },
+      )
     }
 
-    // Atualizar o programa do usuário
-    await User.findByIdAndUpdate(userId, { program: "sedentary" })
+    try {
+      // Atualizar o programa do usuário
+      await User.findByIdAndUpdate(userId, { program: "sedentary" })
 
-    // Verificar se já existe um perfil sedentário para este usuário
-    let profile = await SedentaryProfile.findOne({ userId })
+      // Verificar se já existe um perfil sedentário para este usuário
+      let profile = await SedentaryProfile.findOne({ userId })
 
-    if (profile) {
-      // Atualizar perfil existente
-      profile.gender = gender
-      profile.weight = weight
-      profile.height = height
-      profile.daysPerWeek = daysPerWeek
-      profile.timePerDay = timePerDay
-      profile.updatedAt = new Date()
-      await profile.save()
-    } else {
-      // Criar novo perfil
-      profile = await SedentaryProfile.create({
-        userId,
-        gender,
-        weight,
-        height,
-        daysPerWeek,
-        timePerDay,
-      })
+      if (profile) {
+        // Atualizar perfil existente
+        profile.gender = gender
+        profile.weight = weight
+        profile.height = height
+        profile.daysPerWeek = daysPerWeek
+        profile.timePerDay = timePerDay
+        profile.updatedAt = new Date()
+        await profile.save()
+      } else {
+        // Criar novo perfil
+        profile = await SedentaryProfile.create({
+          userId,
+          gender,
+          weight,
+          height,
+          daysPerWeek,
+          timePerDay,
+        })
+      }
+
+      return NextResponse.json({ success: true, data: profile }, { status: 201 })
+    } catch (dbError) {
+      console.error("Erro no banco de dados:", dbError)
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Erro ao salvar no banco de dados: " + (dbError as Error).message,
+        },
+        { status: 500 },
+      )
     }
-
-    return NextResponse.json({ success: true, data: profile }, { status: 201 })
   } catch (error) {
     console.error("Erro ao salvar perfil sedentário:", error)
-    return NextResponse.json({ success: false, message: "Erro ao salvar perfil sedentário" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Erro ao salvar perfil sedentário: " + (error as Error).message,
+      },
+      { status: 500 },
+    )
   }
 }
 

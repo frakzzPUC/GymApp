@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
-            program: user.program,
+            program: user.program || null, // Garantir que o programa seja incluído
           }
         } catch (error) {
           console.error("Erro na autenticação:", error)
@@ -60,14 +60,31 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name
         token.program = user.program
       }
+
+      // Se o token não tiver programa, tente buscar do banco de dados
+      if (!token.program && token.id) {
+        try {
+          await dbConnect()
+          const dbUser = await User.findById(token.id).select("program")
+          if (dbUser && dbUser.program) {
+            token.program = dbUser.program
+          }
+        } catch (error) {
+          console.error("Erro ao buscar programa do usuário:", error)
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id
-        session.user.name = token.name
-        session.user.email = token.email
-        session.user.program = token.program
+        session.user = {
+          ...session.user,
+          id: token.id as string,
+          name: token.name as string,
+          email: token.email as string,
+          program: token.program as string | null,
+        }
       }
       return session
     },

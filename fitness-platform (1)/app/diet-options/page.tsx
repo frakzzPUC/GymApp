@@ -3,41 +3,62 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
-import { Check, Leaf, ShoppingCart, Utensils } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from 'lucide-react'
 
 export default function DietOptionsPage() {
-  const [selectedDiet, setSelectedDiet] = useState<string | null>(null)
+  const [dietType, setDietType] = useState<string>("")
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  // Adicione esta função para salvar a escolha da dieta
-  const handleSubmit = async () => {
-    if (selectedDiet) {
-      try {
-        const response = await fetch("/api/training-diet", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            dietType: selectedDiet,
-          }),
-        })
-
-        const data = await response.json()
-
-        if (data.success) {
-          // Dieta salva com sucesso, redirecionar para o dashboard
-          router.push("/dashboard?program=training-diet")
-        } else {
-          // Exibir mensagem de erro (você precisaria adicionar um estado para isso)
-          console.error("Erro ao salvar dieta:", data.message)
-        }
-      } catch (error) {
-        console.error("Erro ao salvar dieta:", error)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!dietType) {
+      setError("Por favor, selecione um tipo de dieta")
+      return
+    }
+    
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      // Buscar o perfil atual primeiro
+      const profileResponse = await fetch("/api/training-diet")
+      const profileData = await profileResponse.json()
+      
+      if (!profileData.success) {
+        throw new Error(profileData.message || "Erro ao buscar perfil")
       }
+      
+      // Atualizar o perfil com o tipo de dieta selecionado
+      const response = await fetch("/api/training-diet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...profileData.data,
+          dietType
+        }),
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        router.push("/dashboard")
+      } else {
+        setError(data.message || "Erro ao salvar tipo de dieta")
+      }
+    } catch (error) {
+      console.error("Erro ao salvar tipo de dieta:", error)
+      setError("Erro ao conectar com o servidor. Tente novamente mais tarde.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -53,142 +74,61 @@ export default function DietOptionsPage() {
         </div>
       </header>
       <main className="flex-1 p-4 md:p-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">Opções de Dieta</h1>
-            <p className="mt-4 text-muted-foreground">
-              Escolha o plano alimentar que melhor se adapta ao seu orçamento e estilo de vida
-            </p>
-          </div>
-
-          <RadioGroup value={selectedDiet || ""} onValueChange={setSelectedDiet} className="grid gap-6 md:grid-cols-3">
-            <div className="relative">
-              <RadioGroupItem value="economic" id="economic" className="sr-only" />
-              <Label
-                htmlFor="economic"
-                className={`flex h-full cursor-pointer flex-col rounded-lg border p-6 shadow-sm ${
-                  selectedDiet === "economic" ? "border-emerald-600 ring-2 ring-emerald-600" : ""
-                }`}
-              >
-                {selectedDiet === "economic" && (
-                  <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
-                    <Check className="h-4 w-4" />
+        <div className="mx-auto max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Escolha seu Plano Alimentar</CardTitle>
+              <CardDescription>Selecione o tipo de plano alimentar que melhor se adapta às suas necessidades</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <RadioGroup value={dietType} onValueChange={setDietType} className="grid gap-4">
+                  <div className="flex items-start space-x-4 rounded-md border p-4">
+                    <RadioGroupItem value="economic" id="economic" className="mt-1" />
+                    <div>
+                      <Label htmlFor="economic" className="text-base font-medium">Econômico</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Plano alimentar com opções acessíveis e de baixo custo, mantendo o valor nutricional necessário.
+                      </p>
+                    </div>
                   </div>
-                )}
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-                  <ShoppingCart className="h-5 w-5 text-emerald-600" />
-                </div>
-                <CardTitle className="text-xl">Dieta Econômica</CardTitle>
-                <div className="mt-1 text-sm text-muted-foreground">Alimentos acessíveis e nutritivos</div>
-                <ul className="mt-6 space-y-2 text-sm">
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Ingredientes de baixo custo
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Receitas simples e práticas
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Foco em alimentos da estação
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Lista de compras otimizada
-                  </li>
-                </ul>
-              </Label>
-            </div>
-
-            <div className="relative">
-              <RadioGroupItem value="balanced" id="balanced" className="sr-only" />
-              <Label
-                htmlFor="balanced"
-                className={`flex h-full cursor-pointer flex-col rounded-lg border p-6 shadow-sm ${
-                  selectedDiet === "balanced" ? "border-emerald-600 ring-2 ring-emerald-600" : ""
-                }`}
-              >
-                {selectedDiet === "balanced" && (
-                  <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
-                    <Check className="h-4 w-4" />
+                  <div className="flex items-start space-x-4 rounded-md border p-4">
+                    <RadioGroupItem value="balanced" id="balanced" className="mt-1" />
+                    <div>
+                      <Label htmlFor="balanced" className="text-base font-medium">Balanceado</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Plano alimentar equilibrado com variedade de alimentos e nutrientes para uma dieta saudável.
+                      </p>
+                    </div>
                   </div>
-                )}
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-                  <Utensils className="h-5 w-5 text-emerald-600" />
-                </div>
-                <CardTitle className="text-xl">Dieta Balanceada</CardTitle>
-                <div className="mt-1 text-sm text-muted-foreground">Equilíbrio entre custo e variedade</div>
-                <ul className="mt-6 space-y-2 text-sm">
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Alimentos de custo médio
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Maior variedade de proteínas
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Opções para todas as refeições
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Receitas mais elaboradas
-                  </li>
-                </ul>
-              </Label>
-            </div>
-
-            <div className="relative">
-              <RadioGroupItem value="premium" id="premium" className="sr-only" />
-              <Label
-                htmlFor="premium"
-                className={`flex h-full cursor-pointer flex-col rounded-lg border p-6 shadow-sm ${
-                  selectedDiet === "premium" ? "border-emerald-600 ring-2 ring-emerald-600" : ""
-                }`}
-              >
-                {selectedDiet === "premium" && (
-                  <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
-                    <Check className="h-4 w-4" />
+                  <div className="flex items-start space-x-4 rounded-md border p-4">
+                    <RadioGroupItem value="premium" id="premium" className="mt-1" />
+                    <div>
+                      <Label htmlFor="premium" className="text-base font-medium">Premium</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Plano alimentar com alimentos de alta qualidade, superalimentos e opções orgânicas.
+                      </p>
+                    </div>
                   </div>
-                )}
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-                  <Leaf className="h-5 w-5 text-emerald-600" />
-                </div>
-                <CardTitle className="text-xl">Dieta Premium</CardTitle>
-                <div className="mt-1 text-sm text-muted-foreground">Ingredientes de alta qualidade</div>
-                <ul className="mt-6 space-y-2 text-sm">
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Alimentos orgânicos e premium
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Superalimentos e suplementos
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Proteínas de alta qualidade
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                    Receitas gourmet e elaboradas
-                  </li>
-                </ul>
-              </Label>
-            </div>
-          </RadioGroup>
+                </RadioGroup>
 
-          <div className="mt-8 flex justify-center">
-            <Button
-              onClick={handleSubmit}
-              disabled={!selectedDiet}
-              className="px-8 bg-emerald-600 hover:bg-emerald-700"
-            >
-              Confirmar Seleção
-            </Button>
-          </div>
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Salvando..." : "Continuar"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

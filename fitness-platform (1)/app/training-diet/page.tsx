@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle } from 'lucide-react'
 
 export default function TrainingDietPage() {
   const [weight, setWeight] = useState("")
@@ -32,6 +32,7 @@ export default function TrainingDietPage() {
     fitnessLevel?: string
     goal?: string
   }>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
   const validateForm = () => {
@@ -88,32 +89,39 @@ export default function TrainingDietPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Substitua a função handleSubmit por esta versão que usa a API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (validateForm()) {
       try {
+        setIsSubmitting(true)
+        
+        const formData = {
+          gender,
+          weight: Number(weight),
+          height: Number(height),
+          goal,
+          fitnessLevel,
+          daysPerWeek: Number(daysPerWeek),
+          timePerDay: Number(timePerDay),
+        }
+        
+        console.log("Enviando dados:", formData)
+
         const response = await fetch("/api/training-diet", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            gender,
-            weight: Number(weight),
-            height: Number(height),
-            goal,
-            fitnessLevel,
-            daysPerWeek: Number(daysPerWeek),
-            timePerDay: Number(timePerDay),
-          }),
+          body: JSON.stringify(formData),
         })
 
         const data = await response.json()
+        console.log("Resposta da API:", data)
 
         if (data.success) {
           // Perfil salvo com sucesso
+          console.log("Perfil salvo com sucesso, redirecionando...")
           if (wantsDiet) {
             router.push("/diet-options")
           } else {
@@ -121,10 +129,12 @@ export default function TrainingDietPage() {
           }
         } else {
           // Exibir mensagem de erro
+          console.error("Erro retornado pela API:", data.message)
           setErrors({
             ...errors,
             weight: data.message || "Erro ao salvar perfil",
           })
+          setIsSubmitting(false)
         }
       } catch (error) {
         console.error("Erro ao salvar perfil:", error)
@@ -132,6 +142,7 @@ export default function TrainingDietPage() {
           ...errors,
           weight: "Erro ao conectar com o servidor. Tente novamente mais tarde.",
         })
+        setIsSubmitting(false)
       }
     }
   }
@@ -287,8 +298,12 @@ export default function TrainingDietPage() {
                   </Alert>
                 )}
 
-                <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700">
-                  Continuar
+                <Button 
+                  type="submit" 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Enviando..." : "Continuar"}
                 </Button>
               </form>
             </CardContent>

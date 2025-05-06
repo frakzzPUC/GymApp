@@ -70,33 +70,44 @@ export default function SedentaryPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Substitua a função handleSubmit por esta versão que usa a API
+  // Vamos corrigir a função handleSubmit para melhorar o tratamento de erros e garantir que os dados sejam enviados corretamente
+
+  // Substitua a função handleSubmit atual por esta versão melhorada:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (validateForm()) {
       try {
+        setErrors({}) // Limpar erros anteriores
+
+        // Converter os valores para números antes de enviar
+        const payload = {
+          gender,
+          weight: Number(weight),
+          height: Number(height),
+          daysPerWeek: Number(daysPerWeek),
+          timePerDay: Number(timePerDay),
+        }
+
+        console.log("Enviando dados:", payload)
+
         const response = await fetch("/api/sedentary", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            gender,
-            weight: Number(weight),
-            height: Number(height),
-            daysPerWeek: Number(daysPerWeek),
-            timePerDay: Number(timePerDay),
-          }),
+          body: JSON.stringify(payload),
         })
 
         const data = await response.json()
+        console.log("Resposta da API:", data)
 
         if (data.success) {
           // Perfil salvo com sucesso, redirecionar para o dashboard
           router.push("/dashboard?program=sedentary")
         } else {
           // Exibir mensagem de erro
+          console.error("Erro retornado pela API:", data.message)
           setErrors({
             ...errors,
             weight: data.message || "Erro ao salvar perfil",

@@ -13,6 +13,7 @@ export default function RehabilitationPage() {
   const [selectedPains, setSelectedPains] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const [painLevel, setPainLevel] = useState("7")
 
   const painOptions = [
     { id: "lower-back", label: "Dor na lombar" },
@@ -53,6 +54,7 @@ export default function RehabilitationPage() {
         },
         body: JSON.stringify({
           painAreas: selectedPains,
+          initialPainLevel: Number.parseInt(painLevel, 10),
         }),
       })
 
@@ -105,6 +107,26 @@ export default function RehabilitationPage() {
                     </Label>
                   </div>
                 ))}
+              </div>
+
+              <div className="space-y-3 mt-6">
+                <Label htmlFor="pain-level">Nível de dor atual (1-10)</Label>
+                <div className="flex items-center">
+                  <span className="mr-2 text-sm">1</span>
+                  <input
+                    id="pain-level"
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={painLevel}
+                    onChange={(e) => setPainLevel(e.target.value)}
+                    className="flex-1"
+                  />
+                  <span className="ml-2 text-sm">10</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-sm font-medium">{painLevel}</span>
+                </div>
               </div>
 
               {error && (

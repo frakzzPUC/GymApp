@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id
     const body = await req.json()
-    const { painAreas } = body
+    const { painAreas, initialPainLevel } = body
 
     // Validação básica
     if (!painAreas || !Array.isArray(painAreas) || painAreas.length === 0) {
@@ -34,12 +34,22 @@ export async function POST(req: NextRequest) {
       // Atualizar perfil existente
       profile.painAreas = painAreas
       profile.updatedAt = new Date()
+      if (initialPainLevel) {
+        profile.progress.initialPainLevel = initialPainLevel
+        profile.progress.currentPainLevel = initialPainLevel
+      }
       await profile.save()
     } else {
       // Criar novo perfil
       profile = await RehabilitationProfile.create({
         userId,
         painAreas,
+        progress: {
+          initialPainLevel: initialPainLevel || 7,
+          currentPainLevel: initialPainLevel || 7,
+          weeklyExercises: 5,
+          completedExercises: 0,
+        },
       })
     }
 

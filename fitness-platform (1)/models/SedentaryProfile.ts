@@ -1,5 +1,41 @@
 import mongoose from "mongoose"
 
+export interface IActivity {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  description: string;
+  duration: string;
+  completed: boolean;
+  date: Date;
+}
+
+const ActivitySchema = new mongoose.Schema({
+  name: String,
+  description: String,
+  duration: String,
+  completed: {
+    type: Boolean,
+    default: false,
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+export interface ISedentaryProgress {
+  stepsGoal: number;
+  stepsToday: number;
+  weeklyActivity: number;
+  weeklyGoal: number;
+  completedActivities: number;
+  progressPercentage: number;
+  heartRate: {
+    resting: number;
+    initial: number;
+  };
+}
+
 const SedentaryProfileSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -28,21 +64,7 @@ const SedentaryProfileSchema = new mongoose.Schema({
     required: true,
   },
   activities: {
-    type: [
-      {
-        name: String,
-        description: String,
-        duration: String,
-        completed: {
-          type: Boolean,
-          default: false,
-        },
-        date: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
+    type: [ActivitySchema],
     default: [],
   },
   progress: {
@@ -61,6 +83,14 @@ const SedentaryProfileSchema = new mongoose.Schema({
     weeklyGoal: {
       type: Number,
       default: 5,
+    },
+    completedActivities: {
+      type: Number,
+      default: 0,
+    },
+    progressPercentage: {
+      type: Number,
+      default: 0,
     },
     heartRate: {
       resting: {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -50,6 +50,69 @@ export default function ProfilePage() {
     startDate: "15/02/2023",
   }
 
+  useEffect(() => {
+    // Função para buscar dados do usuário
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("/api/user/profile")
+        const data = await response.json()
+
+        if (data.success) {
+          // Atualizar o estado com os dados do usuário
+          setUserData({
+            name: data.user.name || "",
+            email: data.user.email || "",
+            phone: data.user.phone || "",
+            birthdate: data.user.birthdate ? new Date(data.user.birthdate).toISOString().split("T")[0] : "",
+            height: data.user.height?.toString() || "",
+            weight: data.user.weight?.toString() || "",
+            program: data.user.program || "",
+            programName: getProgramName(data.user.program),
+            goal: data.user.goal || "",
+            goalName: getGoalName(data.user.goal),
+            gender: data.user.gender || "",
+            notifications: {
+              email: true,
+              push: true,
+              sms: false,
+            },
+          })
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados do usuário:", error)
+      }
+    }
+
+    fetchUserData()
+  }, [])
+
+  // Adicione estas funções auxiliares
+  const getProgramName = (program: string) => {
+    switch (program) {
+      case "rehabilitation":
+        return "Reabilitação"
+      case "sedentary":
+        return "Saindo do Sedentarismo"
+      case "training-diet":
+        return "Treino + Dieta"
+      default:
+        return ""
+    }
+  }
+
+  const getGoalName = (goal: string) => {
+    switch (goal) {
+      case "lose-weight":
+        return "Emagrecer"
+      case "gain-muscle":
+        return "Ganhar Massa Muscular"
+      case "maintain":
+        return "Manter Forma Física"
+      default:
+        return ""
+    }
+  }
+
   const handleSaveProfile = () => {
     // Em uma aplicação real, aqui seria feita a chamada à API para salvar os dados
     setIsEditing(false)
@@ -65,6 +128,10 @@ export default function ProfilePage() {
     // Em uma aplicação real, aqui seria feito o logout
     router.push("/")
   }
+
+  // Verificar o tipo de programa do usuário
+  const isProgramTrainingDiet = userData.program === "training-diet"
+  const isProgramRehabilitation = userData.program === "rehabilitation"
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -250,26 +317,30 @@ export default function ProfilePage() {
                               disabled={!isEditing}
                             />
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="height">Altura (cm)</Label>
-                            <Input
-                              id="height"
-                              type="number"
-                              value={userData.height}
-                              onChange={(e) => setUserData({ ...userData, height: e.target.value })}
-                              disabled={!isEditing}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="weight">Peso Atual (kg)</Label>
-                            <Input
-                              id="weight"
-                              type="number"
-                              value={userData.weight}
-                              onChange={(e) => setUserData({ ...userData, weight: e.target.value })}
-                              disabled={!isEditing}
-                            />
-                          </div>
+                          {!isProgramRehabilitation && (
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="height">Altura (cm)</Label>
+                                <Input
+                                  id="height"
+                                  type="number"
+                                  value={userData.height}
+                                  onChange={(e) => setUserData({ ...userData, height: e.target.value })}
+                                  disabled={!isEditing}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="weight">Peso Atual (kg)</Label>
+                                <Input
+                                  id="weight"
+                                  type="number"
+                                  value={userData.weight}
+                                  onChange={(e) => setUserData({ ...userData, weight: e.target.value })}
+                                  disabled={!isEditing}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -291,64 +362,22 @@ export default function ProfilePage() {
 
                         <div className="space-y-2">
                           <Label htmlFor="program">Programa Atual</Label>
-                          <Select
-                            value={userData.program}
-                            onValueChange={(value) => {
-                              const programNames = {
-                                rehabilitation: "Reabilitação",
-                                sedentary: "Saindo do Sedentarismo",
-                                "training-diet": "Treino + Dieta",
-                              }
-                              setUserData({
-                                ...userData,
-                                program: value,
-                                programName: programNames[value as keyof typeof programNames],
-                              })
-                            }}
-                            disabled={!isEditing}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um programa" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="rehabilitation">Reabilitação</SelectItem>
-                              <SelectItem value="sedentary">Saindo do Sedentarismo</SelectItem>
-                              <SelectItem value="training-diet">Treino + Dieta</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="p-2 bg-muted rounded-md">
+                            <span className="font-medium">{userData.programName}</span>
+                          </div>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Alterar o programa pode requerer informações adicionais.
+                            Para mudar de programa, entre em contato com o suporte.
                           </p>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="goal">Objetivo</Label>
-                          <Select
-                            value={userData.goal}
-                            onValueChange={(value) => {
-                              const goalNames = {
-                                "lose-weight": "Emagrecer",
-                                "gain-muscle": "Ganhar Massa Muscular",
-                                maintain: "Manter Forma Física",
-                              }
-                              setUserData({
-                                ...userData,
-                                goal: value,
-                                goalName: goalNames[value as keyof typeof goalNames],
-                              })
-                            }}
-                            disabled={!isEditing}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um objetivo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="lose-weight">Emagrecer</SelectItem>
-                              <SelectItem value="gain-muscle">Ganhar Massa Muscular</SelectItem>
-                              <SelectItem value="maintain">Manter Forma Física</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        {isProgramTrainingDiet && (
+                          <div className="space-y-2">
+                            <Label htmlFor="goal">Objetivo</Label>
+                            <div className="p-2 bg-muted rounded-md">
+                              <span className="font-medium">{userData.goalName}</span>
+                            </div>
+                          </div>
+                        )}
                       </form>
                     </CardContent>
                     <CardFooter className="flex justify-end">

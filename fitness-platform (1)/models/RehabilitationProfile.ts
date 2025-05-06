@@ -1,5 +1,36 @@
 import mongoose from "mongoose"
 
+export interface IExercise {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  description: string;
+  duration: string;
+  completed: boolean;
+  date: Date;
+}
+
+const ExerciseSchema = new mongoose.Schema({
+  name: String,
+  description: String,
+  duration: String,
+  completed: {
+    type: Boolean,
+    default: false,
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+export interface IRehabilitationProgress {
+  initialPainLevel: number;
+  currentPainLevel: number;
+  weeklyExercises: number;
+  completedExercises: number;
+  progressPercentage: number;
+}
+
 const RehabilitationProfileSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -11,21 +42,7 @@ const RehabilitationProfileSchema = new mongoose.Schema({
     required: true,
   },
   exercises: {
-    type: [
-      {
-        name: String,
-        description: String,
-        duration: String,
-        completed: {
-          type: Boolean,
-          default: false,
-        },
-        date: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
+    type: [ExerciseSchema],
     default: [],
   },
   progress: {
@@ -45,6 +62,10 @@ const RehabilitationProfileSchema = new mongoose.Schema({
       type: Number,
       default: 0,
     },
+    progressPercentage: {
+      type: Number,
+      default: 0,
+    }
   },
   createdAt: {
     type: Date,
