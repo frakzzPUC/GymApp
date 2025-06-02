@@ -1,15 +1,15 @@
 "use client"
 
-import { CardFooter } from "@/components/ui/card"
+import { CardFooter } from "@/components/ui/data-display/card"
 import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
-import { Calendar } from "@/components/ui/calendar"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/actions/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/data-display/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/navigation/tabs"
+import { Progress } from "@/components/ui/feedback/progress"
+import { Calendar } from "@/components/ui/data-display/calendar"
+import { Badge } from "@/components/ui/feedback/badge"
 import {
   Activity,
   ArrowUp,
@@ -25,7 +25,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/feedback/alert"
 import { useSession } from "next-auth/react"
 
 // Interface para os dados do perfil do usuário

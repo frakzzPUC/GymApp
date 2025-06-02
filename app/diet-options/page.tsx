@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Button } from "@/components/ui/button"
-import { CardTitle } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/actions/button"
+import { CardTitle } from "@/components/ui/data-display/card"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/form/radio-group"
+import { Label } from "@/components/ui/form/label"
 import { Check, Leaf, ShoppingCart, Utensils, Loader2, AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/components/ui/feedback/alert"
 
 export default function DietOptionsPage() {
   const [selectedDiet, setSelectedDiet] = useState<string | null>(null)

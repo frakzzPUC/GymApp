@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/actions/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/data-display/card"
+import { Checkbox } from "@/components/ui/form/checkbox"
+import { Label } from "@/components/ui/form/label"
+import { Alert, AlertDescription } from "@/components/ui/feedback/alert"
 import { AlertCircle, Loader2 } from "lucide-react"
 
 export default function RehabilitationPage() {
