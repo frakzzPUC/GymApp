@@ -1,7 +1,47 @@
+"use client"
+
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/actions/button"
+import { useEffect, useState } from "react"
+import { Swiper, SwiperSlide } from "swiper/react"
+import "swiper/css"
+import "swiper/css/navigation"
+
+interface Noticia {
+  title: string;
+  url: string;
+  description?: string;
+  urlToImage?: string;
+}
 
 export default function Home() {
+  const [noticias, setNoticias] = useState<Noticia[]>([])
+  const [loading, setLoading] = useState(true)
+  const [erro, setErro] = useState("")
+
+  useEffect(() => {
+    async function fetchNoticias() {
+      try {
+        // Busca notícias sobre nutrição, academia e fisioterapia, excluindo CV, STF, crime e política
+        const res = await fetch(
+          "https://newsapi.org/v2/everything?q=(nutrição OR academia OR fisioterapia OR musculação) -CV -STF -crime -senado -Câmara -Suprema -amputar -relator -código -civil -política&language=pt&sortBy=publishedAt&pageSize=10&apiKey=d30b319d4df74a6a936fa9c1e824051e"
+        )
+        const data = await res.json()
+        console.log('Resposta da NewsAPI:', data)
+        if (data.articles) {
+          setNoticias(data.articles)
+        } else {
+          setErro("Não foi possível carregar as notícias.")
+        }
+      } catch (e) {
+        setErro("Erro ao buscar notícias.")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchNoticias()
+  }, [])
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -164,6 +204,42 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-white dark:bg-background">
+          <div className="container px-4 md:px-6">
+            <h2 className="text-2xl font-bold mb-6">Notícias sobre Nutrição, Academia e Fisioterapia</h2>
+            {loading ? (
+              <p>Carregando notícias...</p>
+            ) : erro ? (
+              <p className="text-red-500">{erro}</p>
+            ) : noticias.length === 0 ? (
+              <p>Nenhuma notícia encontrada.</p>
+            ) : (
+              <Swiper
+                spaceBetween={24}
+                slidesPerView={1.2}
+                navigation
+                style={{ paddingBottom: 40 }}
+                breakpoints={{
+                  640: { slidesPerView: 1.2 },
+                  1024: { slidesPerView: 1.5 },
+                }}
+              >
+                {noticias.map((noticia, idx) => (
+                  <SwiperSlide key={idx}>
+                    <div className="border rounded-lg p-4 shadow-sm bg-gray-50 dark:bg-gray-900 flex flex-col items-center h-full">
+                      <a href={noticia.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-700 dark:text-emerald-300 hover:underline text-lg text-center">
+                        {noticia.title}
+                      </a>
+                      {noticia.description && <p className="text-sm text-muted-foreground mt-1 text-center">{noticia.description}</p>}
+                      {noticia.urlToImage && <img src={noticia.urlToImage} alt="imagem da notícia" className="mt-2 max-h-40 rounded mx-auto" />}
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
           </div>
         </section>
       </main>
