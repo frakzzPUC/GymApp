@@ -39,14 +39,129 @@ export async function POST(req: NextRequest) {
     }
 
     // Caso contrário, estamos criando/atualizando o perfil completo
-    const { gender, weight, height, goal, fitnessLevel, daysPerWeek, timePerDay, dietType } = body
+    const { 
+      // Dados pessoais básicos
+      age, gender, weight, height,
+      
+      // Histórico de saúde e atividade física
+      activityLevel, exerciseExperience, fitnessLevel, medicalConditions, injuries, medications,
+      
+      // Objetivos e preferências de treino
+      primaryGoal, secondaryGoals, daysPerWeek, timePerDay, preferredTime, workoutLocation, 
+      availableEquipment, exercisePreferences, exerciseDislikes,
+      
+      // Informações nutricionais
+      wantsDiet, dietaryRestrictions, allergies, currentEatingHabits, mealsPerDay, 
+      waterIntake, supplementUsage, budgetPreference, cookingSkill, mealPrepTime,
+      
+      // Estilo de vida
+      profession, stressLevel, sleepHours, sleepQuality,
+      
+      // Motivação e apoio
+      motivation, obstacles, supportSystem, previousAttempts,
+      
+      // Legacy fields
+      goal, dietType 
+    } = body
 
     // Validação básica para criação/atualização completa
-    if (!gender || !weight || !height || !goal || !fitnessLevel || !daysPerWeek || !timePerDay) {
-      return NextResponse.json({ success: false, message: "Todos os campos são obrigatórios" }, { status: 400 })
+    if (!age || !gender || !weight || !height || !primaryGoal || !fitnessLevel || !daysPerWeek || !timePerDay) {
+      console.error("Campos obrigatórios faltando:", {
+        age: !!age,
+        gender: !!gender,
+        weight: !!weight,
+        height: !!height,
+        primaryGoal: !!primaryGoal,
+        fitnessLevel: !!fitnessLevel,
+        daysPerWeek: !!daysPerWeek,
+        timePerDay: !!timePerDay
+      })
+      return NextResponse.json({ 
+        success: false, 
+        message: "Campos obrigatórios: idade, gênero, peso, altura, objetivo principal, nível de condicionamento, dias por semana e tempo por dia" 
+      }, { status: 400 })
+    }
+
+    // Validação adicional de enums
+    const validGenders = ["male", "female", "other"]
+    if (!validGenders.includes(gender)) {
+      return NextResponse.json({ 
+        success: false, 
+        message: `Gênero inválido: ${gender}. Valores aceitos: ${validGenders.join(', ')}` 
+      }, { status: 400 })
+    }
+
+    const validActivityLevels = ["sedentary", "light", "moderate", "active", "very-active"]
+    if (activityLevel && !validActivityLevels.includes(activityLevel)) {
+      return NextResponse.json({ 
+        success: false, 
+        message: `Nível de atividade inválido: ${activityLevel}. Valores aceitos: ${validActivityLevels.join(', ')}` 
+      }, { status: 400 })
     }
 
     console.log("Atualizando programa do usuário para training-diet:", userId)
+
+    // Preparar dados limpos para evitar problemas de validação
+    const cleanData = {
+      // Dados pessoais básicos (obrigatórios)
+      age: Number(age),
+      gender,
+      weight: Number(weight), 
+      height: Number(height),
+      
+      // Histórico de saúde e atividade física
+      activityLevel,
+      exerciseExperience, 
+      fitnessLevel,
+      medicalConditions: medicalConditions || [],
+      injuries: injuries || "",
+      medications: medications || "",
+      
+      // Objetivos e preferências de treino
+      primaryGoal,
+      secondaryGoals: secondaryGoals || [],
+      daysPerWeek: Number(daysPerWeek),
+      timePerDay: Number(timePerDay),
+      preferredTime,
+      workoutLocation,
+      availableEquipment: availableEquipment || [],
+      exercisePreferences: exercisePreferences || [],
+      exerciseDislikes: exerciseDislikes || [],
+      
+      // Informações nutricionais (condicionais)
+      wantsDiet: wantsDiet || false,
+      dietaryRestrictions: dietaryRestrictions || [],
+      allergies: allergies || "",
+      ...(wantsDiet && currentEatingHabits && { currentEatingHabits }),
+      ...(wantsDiet && mealsPerDay && { mealsPerDay: Number(mealsPerDay) }),
+      ...(wantsDiet && waterIntake && { waterIntake }),
+      supplementUsage: supplementUsage || "",
+      ...(wantsDiet && budgetPreference && { budgetPreference }),
+      ...(wantsDiet && cookingSkill && { cookingSkill }),
+      ...(wantsDiet && mealPrepTime && { mealPrepTime }),
+      
+      // Estilo de vida
+      profession,
+      stressLevel,
+      sleepHours: Number(sleepHours),
+      sleepQuality,
+      
+      // Motivação e apoio
+      motivation,
+      obstacles: obstacles || "",
+      supportSystem: supportSystem || "",
+      previousAttempts: previousAttempts || "",
+      
+      // Legacy compatibility
+      goal: primaryGoal,
+      dietType: dietType || "balanced",
+      
+      // Metadados
+      userEmail: session.user.email,
+      updatedAt: new Date()
+    }
+
+    console.log("Dados limpos preparados:", cleanData)
 
     // Atualizar o programa do usuário
     await User.findByIdAndUpdate(userId, { program: "training-diet" })
@@ -56,35 +171,21 @@ export async function POST(req: NextRequest) {
 
     if (profile) {
       console.log("Atualizando perfil existente")
-      // Atualizar perfil existente
-      profile.gender = gender
-      profile.weight = weight
-      profile.height = height
-      profile.goal = goal
-      profile.fitnessLevel = fitnessLevel
-      profile.daysPerWeek = daysPerWeek
-      profile.timePerDay = timePerDay
-      if (dietType) profile.dietType = dietType
-      profile.updatedAt = new Date()
+      // Atualizar perfil existente com dados limpos
+      Object.assign(profile, cleanData)
       await profile.save()
     } else {
       console.log("Criando novo perfil")
-      // Criar novo perfil
+      // Criar novo perfil com dados limpos e campos adicionais
       profile = await TrainingDietProfile.create({
         userId,
-        gender,
-        weight,
-        height,
-        goal,
-        fitnessLevel,
-        daysPerWeek,
-        timePerDay,
-        dietType: dietType || "balanced",
+        ...cleanData,
+        
         // Adicionar treinos padrão
         workouts: [
           {
             name: "Treino Completo",
-            description: "Treino completo para iniciantes",
+            description: "Treino completo para iniciantes", 
             duration: "45 minutos",
             caloriesBurned: 300,
             completed: false,
@@ -93,7 +194,7 @@ export async function POST(req: NextRequest) {
           {
             name: "Treino de Força",
             description: "Foco em ganho de massa muscular",
-            duration: "30 minutos",
+            duration: "30 minutos", 
             caloriesBurned: 250,
             completed: false,
             date: new Date(Date.now() + 86400000), // Amanhã
@@ -108,22 +209,22 @@ export async function POST(req: NextRequest) {
             date: new Date(),
           },
           {
-            name: "Almoço",
+            name: "Almoço", 
             description: "Frango grelhado, arroz integral e legumes",
             calories: 650,
             date: new Date(),
           },
         ],
-        // Inicializar progresso
+        // Inicializar progresso baseado no objetivo
         progress: {
-          caloriesGoal: goal === "lose-weight" ? 1800 : 2200,
+          caloriesGoal: primaryGoal === "lose-weight" ? 1800 : 2200,
           caloriesConsumed: 0,
           caloriesBurned: 0,
           weightChange: 0,
           macros: {
-            protein: goal === "gain-muscle" ? 40 : 30,
-            carbs: goal === "gain-muscle" ? 40 : 30,
-            fat: goal === "gain-muscle" ? 20 : 40,
+            protein: primaryGoal === "gain-muscle" ? 40 : 30,
+            carbs: primaryGoal === "gain-muscle" ? 40 : 30,
+            fat: primaryGoal === "gain-muscle" ? 20 : 40,
           },
         },
       })
@@ -134,7 +235,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: profile }, { status: 201 })
   } catch (error) {
     console.error("Erro ao salvar perfil de treino+dieta:", error)
-    return NextResponse.json({ success: false, message: "Erro ao salvar perfil de treino+dieta" }, { status: 500 })
+    
+    // Melhor tratamento de erros específicos
+    let errorMessage = "Erro ao salvar perfil de treino+dieta"
+    
+    if (error instanceof Error) {
+      errorMessage = error.message
+      console.error("Mensagem específica do erro:", error.message)
+      console.error("Stack trace:", error.stack)
+    }
+    
+    // Erro de validação do Mongoose
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError') {
+      const mongooseError = error as any
+      const validationErrors = Object.values(mongooseError.errors).map((err: any) => err.message)
+      errorMessage = `Erro de validação: ${validationErrors.join(', ')}`
+    }
+    
+    return NextResponse.json({ 
+      success: false, 
+      message: errorMessage,
+      details: error instanceof Error ? error.message : "Erro desconhecido"
+    }, { status: 500 })
   }
 }
 
