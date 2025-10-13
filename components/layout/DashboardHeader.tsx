@@ -13,7 +13,8 @@ import {
   Settings,
   ChevronDown,
   Menu,
-  X
+  X,
+  Trophy
 } from "lucide-react"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Exercícios", href: "/exercises", icon: Search },
   { name: "Planos IA", href: "/ai-plans", icon: Sparkles },
+  { name: "Competições", href: "/competitions", icon: Trophy },
   { name: "Perfil", href: "/profile", icon: User },
 ]
 
@@ -52,7 +54,7 @@ export default function DashboardHeader() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1 flex-1">
           {navigation.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
             const Icon = item.icon
             
             return (
@@ -164,7 +166,7 @@ export default function DashboardHeader() {
         <div className="md:hidden border-t bg-background">
           <nav className="container px-4 py-2 space-y-1">
             {navigation.map((item) => {
-              const isActive = pathname === item.href
+              const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
               const Icon = item.icon
               
               return (
