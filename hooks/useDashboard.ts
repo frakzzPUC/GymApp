@@ -16,6 +16,7 @@ export interface UserProfile {
   goal?: string
   fitnessLevel?: string
   dietType?: string
+  aiNutritionPlan?: string
   // Dados de progresso
   progress: {
     caloriesGoal?: number

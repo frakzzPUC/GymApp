@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react"
-import { Calendar, Dumbbell, Utensils, Trophy, Clock, Sparkles, Eye, Download } from "lucide-react"
-import { Button } from "@/components/ui/actions/button"
+import { Calendar, Dumbbell } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/data-display/card"
-import { Badge } from "@/components/ui/feedback/badge"
-import { Progress } from "@/components/ui/feedback/progress"
-import { Alert, AlertDescription } from "@/components/ui/feedback/alert"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/overlay/dialog"
 import { UserProfile } from "@/hooks/useDashboard"
 import { TrainingDietStats } from "./TrainingDietStats"
+import { TodayWorkout } from "./TodayWorkout"
+import { ProgressHeader } from "./ProgressHeader"
+import { QuickActions } from "./QuickActions"
+import { DailyNutritionCard } from "./DailyNutritionCard"
+import { NutritionPlanModal } from "./NutritionPlanModal"
+import { parseNutritionPlan, MealPlan } from "@/lib/nutrition-parser"
 import { 
   hasCompletedWorkout, 
   hasMissedWorkout, 
@@ -21,93 +22,34 @@ interface TrainingDietDashboardProps {
   onMarkComplete: (workoutId: string) => Promise<void>
 }
 
-interface AIPlansData {
-  latest?: {
-    workoutPlan: string
-    nutritionPlan: string
-    planType: 'ai-generated' | 'static-fallback'
-    generatedAt: string
-    planId: string
-    userProfile: {
-      age: number
-      gender: string
-      weight: number
-      height: number
-      primaryGoal: string
-      activityLevel: string
-      experience: string
-    }
-  }
-  allPlans: Array<{
-    planId: string
-    planType: 'ai-generated' | 'static-fallback'
-    generatedAt: string
-    userProfile: any
-  }>
-  totalPlans: number
-}
-
 export function TrainingDietDashboard({ userProfile, onMarkComplete }: TrainingDietDashboardProps) {
-  const [aiPlans, setAiPlans] = useState<AIPlansData | null>(null)
-  const [isLoadingPlans, setIsLoadingPlans] = useState(false)
-  const [plansError, setPlansError] = useState<string | null>(null)
-  
   const todaysActivities = getTodaysActivities(userProfile)
   const today = new Date()
-  const stats = calculateStats(userProfile)
-  const hasCompletedToday = hasCompletedWorkout(today, userProfile)
-
-  // Buscar planos de IA ao carregar o componente
-  useEffect(() => {
-    fetchAIPlans()
-  }, [])
-
-  const fetchAIPlans = async () => {
-    try {
-      setIsLoadingPlans(true)
-      const response = await fetch('/api/ai-plans')
-      const data = await response.json()
-      
-      if (data.success && data.hasPlans) {
-        setAiPlans(data.data)
-      } else {
-        setAiPlans(null)
-      }
-      setPlansError(null)
-    } catch (error) {
-      console.error('Erro ao buscar planos de IA:', error)
-      setPlansError('Erro ao carregar planos de IA')
-    } finally {
-      setIsLoadingPlans(false)
-    }
-  }
-
-  const generateNewPlans = async () => {
-    try {
-      setIsLoadingPlans(true)
-      const response = await fetch('/api/ai-plans', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        await fetchAIPlans() // Recarregar os planos
-        alert('Planos gerados com sucesso!')
-      } else {
-        throw new Error(data.error || 'Erro ao gerar planos')
-      }
-    } catch (error) {
-      console.error('Erro ao gerar planos:', error)
-      alert('Erro ao gerar planos. Tente novamente.')
-    } finally {
-      setIsLoadingPlans(false)
-    }
-  }
   
+  // Estados para controlar progresso interativo
+  const [hasCompletedTodaysWorkout, setHasCompletedTodaysWorkout] = useState(hasCompletedWorkout(today, userProfile))
+  const [currentSteps, setCurrentSteps] = useState(userProfile.progress?.stepsToday || 0)
+  const [currentWeight, setCurrentWeight] = useState(userProfile.weight)
+  const [completedMeals, setCompletedMeals] = useState(0)
+  const [activeMinutesToday, setActiveMinutesToday] = useState(userProfile.progress?.weeklyActivity || 0)
+  const [totalCaloriesConsumed, setTotalCaloriesConsumed] = useState(userProfile.progress?.caloriesConsumed || 0)
+  const [completedWorkoutsWeek, setCompletedWorkoutsWeek] = useState(userProfile.progress?.completedExercises || 0)
+  const [nutritionPlan, setNutritionPlan] = useState<string | null>(null)
+  const [isLoadingNutrition, setIsLoadingNutrition] = useState(true)
+  
+  // Estado para controlar quais refeições foram completadas
+  const [completedMealIds, setCompletedMealIds] = useState<Set<number>>(new Set())
+  
+  // Plano de refeições baseado na IA
+  const [mealPlan, setMealPlan] = useState<MealPlan[]>([
+    { mealTime: 'Café da manhã', foods: [], time: '07:00', calories: '400 kcal' },
+    { mealTime: 'Lanche da manhã', foods: [], time: '10:00', calories: '150 kcal' },
+    { mealTime: 'Almoço', foods: [], time: '12:30', calories: '600 kcal' },
+    { mealTime: 'Lanche da tarde', foods: [], time: '15:30', calories: '200 kcal' },
+    { mealTime: 'Jantar', foods: [], time: '19:00', calories: '500 kcal' },
+  ])
+  const [isNutritionModalOpen, setIsNutritionModalOpen] = useState(false)
+
   // Gerar últimos 7 dias para o calendário
   const getLastSevenDays = () => {
     const days = []
@@ -121,330 +63,157 @@ export function TrainingDietDashboard({ userProfile, onMarkComplete }: TrainingD
 
   const lastSevenDays = getLastSevenDays()
 
-  // Plano de refeições sugerido
-  const mealPlan = [
-    { id: '1', meal: 'Café da manhã', time: '07:00', calories: 400, completed: false },
-    { id: '2', meal: 'Lanche da manhã', time: '10:00', calories: 150, completed: false },
-    { id: '3', meal: 'Almoço', time: '12:30', calories: 600, completed: false },
-    { id: '4', meal: 'Lanche da tarde', time: '15:30', calories: 200, completed: false },
-    { id: '5', meal: 'Jantar', time: '19:00', calories: 500, completed: false },
-  ]
+  // Buscar plano nutricional da IA
+  useEffect(() => {
+    const fetchNutritionPlan = async () => {
+      if (!userProfile) return
+      
+      try {
+        setIsLoadingNutrition(true)
+        
+        // O plano nutricional está no próprio userProfile como aiNutritionPlan
+        if (userProfile.aiNutritionPlan) {
+          console.log('Plano nutricional encontrado no perfil:', userProfile.aiNutritionPlan)
+          setNutritionPlan(userProfile.aiNutritionPlan)
+          
+          // Usar o parser modular
+          const parsedMeals = parseNutritionPlan(userProfile.aiNutritionPlan)
+          if (parsedMeals.length > 0) {
+            setMealPlan(parsedMeals)
+            console.log('Refeições extraídas pelo parser:', parsedMeals)
+          }
+        } else {
+          console.log('Nenhum plano nutricional encontrado no perfil')
+        }
+      } catch (error) {
+        console.error('Erro ao processar plano nutricional:', error)
+      } finally {
+        setIsLoadingNutrition(false)
+      }
+    }
+
+    fetchNutritionPlan()
+  }, [userProfile])
+
+  // Verificar se o treino de hoje já foi completado
+  useEffect(() => {
+    if (hasCompletedTodaysWorkout && completedWorkoutsWeek === 0) {
+      setCompletedWorkoutsWeek(1) // Se já completou o treino de hoje, pelo menos 1 treino foi feito na semana
+    }
+  }, [hasCompletedTodaysWorkout, completedWorkoutsWeek])
+
+  // Calcular refeições completadas e calorias
+  useEffect(() => {
+    setCompletedMeals(completedMealIds.size)
+    
+    // Calcular calorias consumidas baseado nas refeições marcadas
+    const calories = mealPlan
+      .filter((_, index) => completedMealIds.has(index))
+      .reduce((total, meal) => {
+        const calorieValue = meal.calories ? parseInt(meal.calories.replace(/\D/g, '')) : 0
+        return total + calorieValue
+      }, 0)
+    setTotalCaloriesConsumed(calories)
+  }, [mealPlan, completedMealIds])
+
+  // Calcular meta de calorias baseada no plano nutricional
+  const dailyCaloriesGoal = mealPlan.reduce((total, meal) => {
+    const calorieValue = meal.calories ? parseInt(meal.calories.replace(/\D/g, '')) : 0
+    return total + calorieValue
+  }, 0) || userProfile.progress?.caloriesGoal || 2000
+
+  // Calcular estatísticas usando as calorias do plano nutricional
+  const stats = {
+    ...calculateStats(userProfile),
+    caloriesGoal: dailyCaloriesGoal,
+    weeklyProgress: Math.min(100, Math.round((completedWorkoutsWeek / (userProfile.daysPerWeek || 3)) * 100))
+  }
+
+  // Funções para interatividade
+  const handleStepsIncrement = () => {
+    setCurrentSteps(prev => prev + 1000)
+  }
+
+  const handleWeightUpdate = () => {
+    const newWeight = prompt('Digite seu peso atual (kg):')
+    if (newWeight && !isNaN(Number(newWeight)) && Number(newWeight) > 0) {
+      setCurrentWeight(Number(newWeight))
+    }
+  }
+
+  const handleWorkoutComplete = async (workoutId: string) => {
+    try {
+      setHasCompletedTodaysWorkout(true)
+      setCompletedWorkoutsWeek(prev => Math.min(prev + 1, userProfile.daysPerWeek || 3))
+      // Chamar a função original do pai
+      await onMarkComplete(workoutId)
+    } catch (error) {
+      console.error('Erro ao marcar treino como completo:', error)
+      // Reverter mudanças se houver erro
+      setHasCompletedTodaysWorkout(false)
+      setCompletedWorkoutsWeek(prev => Math.max(prev - 1, 0))
+    }
+  }
+
+  const handleMealComplete = (mealIndex: number) => {
+    setCompletedMealIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(mealIndex)) {
+        newSet.delete(mealIndex)
+      } else {
+        newSet.add(mealIndex)
+      }
+      return newSet
+    })
+  }
+
+  const handleQuickMealLog = () => {
+    // Marcar próxima refeição como completa
+    const nextMealIndex = mealPlan.findIndex((_, index) => !completedMealIds.has(index))
+    if (nextMealIndex !== -1) {
+      handleMealComplete(nextMealIndex)
+    }
+  }
+
+  const handleQuickWorkout = () => {
+    if (!hasCompletedTodaysWorkout) {
+      setHasCompletedTodaysWorkout(true)
+      setCompletedWorkoutsWeek(prev => Math.min(prev + 1, userProfile.daysPerWeek || 3))
+    }
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header com saudação */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Treino & Nutrição</h1>
-          <p className="text-muted-foreground">
-            Alcance seus objetivos com treino e alimentação balanceada
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">
-            {today.toLocaleDateString('pt-BR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
-          <div className="flex items-center gap-2 mt-1">
-            <Trophy className="h-4 w-4 text-yellow-500" />
-            <span className="text-sm font-medium">
-              Objetivo: {userProfile.goal === 'lose-weight' ? 'Perder peso' : 
-                        userProfile.goal === 'gain-muscle' ? 'Ganhar massa' : 
-                        'Condicionamento geral'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Estatísticas */}
+      {/* Cabeçalho de Estatísticas */}
       <TrainingDietStats userProfile={userProfile} />
 
-      {/* Seção de Planos de IA */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-600" />
-            Planos Personalizados com IA
-          </CardTitle>
-          <CardDescription>
-            Planos de treino e nutrição gerados especialmente para você
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingPlans ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
-                <p className="text-sm text-muted-foreground">Carregando planos...</p>
-              </div>
-            </div>
-          ) : plansError ? (
-            <Alert variant="destructive">
-              <AlertDescription>{plansError}</AlertDescription>
-            </Alert>
-          ) : aiPlans?.latest ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">Seus Planos Mais Recentes</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Gerado em {new Date(aiPlans.latest.generatedAt).toLocaleDateString('pt-BR')} • 
-                    {aiPlans.latest.planType === 'ai-generated' ? ' IA Avançada' : ' Plano Personalizado'}
-                    {aiPlans.totalPlans > 1 && ` • ${aiPlans.totalPlans} planos salvos`}
-                  </p>
-                </div>
-                <Button onClick={generateNewPlans} disabled={isLoadingPlans}>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Gerar Novos Planos
-                </Button>
-              </div>
+      {/* Header de Progresso */}
+      <ProgressHeader
+        userProfile={userProfile}
+        completedMeals={completedMeals}
+        mealPlan={mealPlan}
+        completedWorkoutsWeek={completedWorkoutsWeek}
+        weeklyProgress={stats.weeklyProgress}
+        activeMinutesToday={activeMinutesToday}
+      />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Plano de Treino */}
-                <div className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Dumbbell className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium">Plano de Treino</span>
-                    <Badge variant="outline" className="text-xs">
-                      {aiPlans.latest.planType === 'ai-generated' ? 'IA' : 'Personalizado'}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {aiPlans.latest.workoutPlan.substring(0, 150)}...
-                  </p>
-                  <div className="flex gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver Completo
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Plano de Treino Personalizado</DialogTitle>
-                          <DialogDescription>
-                            Gerado em {new Date(aiPlans.latest.generatedAt).toLocaleDateString('pt-BR')}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="mt-4">
-                          <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                            {aiPlans.latest.workoutPlan}
-                          </pre>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-
-                {/* Plano de Nutrição */}
-                <div className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Utensils className="h-4 w-4 text-green-600" />
-                    <span className="font-medium">Plano de Nutrição</span>
-                    <Badge variant="outline" className="text-xs">
-                      {aiPlans.latest.planType === 'ai-generated' ? 'IA' : 'Personalizado'}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {aiPlans.latest.nutritionPlan.substring(0, 150)}...
-                  </p>
-                  <div className="flex gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver Completo
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Plano de Nutrição Personalizado</DialogTitle>
-                          <DialogDescription>
-                            Gerado em {new Date(aiPlans.latest.generatedAt).toLocaleDateString('pt-BR')}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="mt-4">
-                          <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                            {aiPlans.latest.nutritionPlan}
-                          </pre>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-              </div>
-
-              {/* Informações do perfil usado */}
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <p className="text-sm text-blue-800 font-medium mb-1">Baseado no seu perfil:</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-blue-700">
-                  <span>Idade: {aiPlans.latest.userProfile.age} anos</span>
-                  <span>Objetivo: {aiPlans.latest.userProfile.primaryGoal}</span>
-                  <span>Nível: {aiPlans.latest.userProfile.experience}</span>
-                  <span>Atividade: {aiPlans.latest.userProfile.activityLevel}</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Sparkles className="h-12 w-12 mx-auto text-purple-300 mb-4" />
-              <h4 className="font-medium mb-2">Nenhum plano gerado ainda</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Gere seus planos personalizados de treino e nutrição com IA
-              </p>
-              <Button onClick={generateNewPlans} disabled={isLoadingPlans}>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Gerar Meus Planos
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Ações Rápidas */}
+      <QuickActions
+        hasCompletedTodaysWorkout={hasCompletedTodaysWorkout}
+        onQuickMealLog={handleQuickMealLog}
+        onMarkWorkout={handleQuickWorkout}
+      />
 
       {/* Grid de conteúdo principal */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Treino de Hoje */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Dumbbell className="h-5 w-5" />
-              Treino de Hoje
-            </CardTitle>
-            <CardDescription>
-              {shouldTrainOnDay(today, userProfile.daysPerWeek) 
-                ? "Seus exercícios programados para hoje"
-                : "Hoje é dia de descanso ativo"
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {shouldTrainOnDay(today, userProfile.daysPerWeek) ? (
-              <div className="space-y-4">
-                {todaysActivities.length > 0 ? (
-                  <>
-                    {todaysActivities.map((workout) => (
-                      <div key={workout._id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <h4 className="font-medium">{workout.name}</h4>
-                          <p className="text-sm text-muted-foreground">{workout.description}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">{workout.duration}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {workout.completed ? (
-                            <Badge variant="secondary" className="text-green-700 bg-green-100">
-                              ✓ Concluído
-                            </Badge>
-                          ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => onMarkComplete(workout._id)}
-                              className="text-xs"
-                            >
-                              Iniciar Treino
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* Progresso do dia */}
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Dumbbell className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-blue-800">Progresso de Hoje</span>
-                      </div>
-                      <Progress 
-                        value={hasCompletedToday ? 100 : 0} 
-                        className="h-2" 
-                      />
-                      <p className="text-xs text-blue-700 mt-1">
-                        {hasCompletedToday ? "Parabéns! Treino concluído" : "Vamos treinar!"}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-6">
-                    <Dumbbell className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-muted-foreground">Nenhum treino programado para hoje</p>
-                    <Button size="sm" className="mt-2">
-                      Criar Treino
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <Calendar className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Hoje é seu dia de descanso!</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Aproveite para fazer atividades leves como caminhada ou alongamento.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Treino de Hoje - Baseado na IA */}
+        <TodayWorkout onMarkComplete={handleWorkoutComplete} />
 
-        {/* Plano Alimentar */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Utensils className="h-5 w-5" />
-              Plano Alimentar
-            </CardTitle>
-            <CardDescription>
-              Suas refeições programadas para hoje
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {/* Progresso calórico */}
-              {stats.caloriesGoal && (
-                <div className="space-y-2 p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-green-800">Calorias</span>
-                    <span className="text-green-700">
-                      {userProfile.progress?.caloriesConsumed || 0} / {stats.caloriesGoal}
-                    </span>
-                  </div>
-                  <Progress value={stats.caloriesProgress} className="h-2" />
-                </div>
-              )}
-              
-              {/* Lista de refeições */}
-              <div className="space-y-2">
-                {mealPlan.map((meal) => (
-                  <div key={meal.id} className="flex items-center justify-between p-2 border rounded">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{meal.meal}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {meal.calories} kcal
-                        </Badge>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{meal.time}</span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant={meal.completed ? "secondary" : "outline"}
-                      onClick={() => onMarkComplete(meal.id)}
-                      className="text-xs"
-                    >
-                      {meal.completed ? "✓" : "Registrar"}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Plano Alimentar - Componente Modular */}
+        <DailyNutritionCard 
+          meals={mealPlan} 
+          onViewFullPlan={() => setIsNutritionModalOpen(true)} 
+        />
       </div>
 
       {/* Calendário de Treinos */}
@@ -466,15 +235,15 @@ export function TrainingDietDashboard({ userProfile, onMarkComplete }: TrainingD
                 const isTrainingDay = shouldTrainOnDay(date, userProfile.daysPerWeek)
                 const completed = hasCompletedWorkout(date, userProfile)
                 const missed = hasMissedWorkout(date, userProfile)
-                
+
                 return (
                   <div key={index} className="text-center">
-                    <div className="text-xs text-muted-foreground mb-2">
+                    <div className="text-xs text-muted-foreground mb-1">
                       {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
                     </div>
-                    <div
+                    <div 
                       className={`
-                        w-12 h-12 rounded-lg flex flex-col items-center justify-center text-sm font-medium border-2
+                        h-12 w-12 rounded-full border-2 flex flex-col items-center justify-center mx-auto transition-all
                         ${isToday ? 'ring-2 ring-primary ring-offset-2' : ''}
                         ${completed ? 'bg-green-500 text-white border-green-500' : ''}
                         ${missed ? 'bg-red-500 text-white border-red-500' : ''}
@@ -517,6 +286,14 @@ export function TrainingDietDashboard({ userProfile, onMarkComplete }: TrainingD
           </div>
         </CardContent>
       </Card>
+      
+      {/* Modal do Plano Nutricional */}
+      <NutritionPlanModal
+        isOpen={isNutritionModalOpen}
+        onClose={() => setIsNutritionModalOpen(false)}
+        nutritionPlan={nutritionPlan || "Nenhum plano nutricional disponível"}
+        userName={userProfile.userId}
+      />
     </div>
   )
 }

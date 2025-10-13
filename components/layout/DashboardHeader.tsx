@@ -23,7 +23,7 @@ const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Exercícios", href: "/exercises", icon: Search },
-  { name: "Planos IA", href: "/ai-plans", icon: Sparkles },
+  { name: "Planos Personalizados", href: "/ai-plans", icon: Sparkles },
   { name: "Competições", href: "/competitions", icon: Trophy },
   { name: "Perfil", href: "/profile", icon: User },
 ]
@@ -120,7 +120,7 @@ export default function DashboardHeader() {
                       onClick={() => setIsProfileOpen(false)}
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
-                      Planos IA
+                      Planos Personalizados
                     </Link>
                     
                     <button
