@@ -23,18 +23,7 @@ export function SedentaryDashboard({ userProfile, onMarkComplete }: SedentaryDas
   const today = new Date()
   const stats = calculateStats(userProfile)
   
-  // Gerar últimos 7 dias para o calendário
-  const getLastSevenDays = () => {
-    const days = []
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(today.getDate() - i)
-      days.push(date)
-    }
-    return days
-  }
 
-  const lastSevenDays = getLastSevenDays()
 
   // Metas diárias sugeridas
   const dailyGoals = [
@@ -159,38 +148,7 @@ export function SedentaryDashboard({ userProfile, onMarkComplete }: SedentaryDas
                 <Progress value={stats.weeklyProgress} className="h-3" />
               </div>
               
-              {/* Calendário visual */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm">Atividade por Dia</h4>
-                <div className="grid grid-cols-7 gap-2">
-                  {lastSevenDays.map((date, index) => {
-                    const isToday = date.toDateString() === today.toDateString()
-                    const isActivityDay = shouldTrainOnDay(date, userProfile.daysPerWeek)
-                    const completed = hasCompletedWorkout(date, userProfile)
-                    const missed = hasMissedWorkout(date, userProfile)
-                    
-                    return (
-                      <div key={index} className="text-center">
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                        </div>
-                        <div
-                          className={`
-                            w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium
-                            ${isToday ? 'ring-2 ring-primary' : ''}
-                            ${completed ? 'bg-green-500 text-white' : ''}
-                            ${missed ? 'bg-orange-300 text-orange-800' : ''}
-                            ${isActivityDay && !completed && !missed ? 'bg-blue-100 text-blue-700' : ''}
-                            ${!isActivityDay ? 'bg-gray-100 text-gray-500' : ''}
-                          `}
-                        >
-                          {date.getDate()}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
+
               
               {/* Dicas motivacionais */}
               <div className="p-3 bg-blue-50 rounded-lg">

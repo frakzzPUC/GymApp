@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Calendar, Dumbbell } from "lucide-react"
+import { Dumbbell } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/data-display/card"
 import { UserProfile } from "@/hooks/useDashboard"
 import { TrainingDietStats } from "./TrainingDietStats"
@@ -50,18 +50,7 @@ export function TrainingDietDashboard({ userProfile, onMarkComplete }: TrainingD
   ])
   const [isNutritionModalOpen, setIsNutritionModalOpen] = useState(false)
 
-  // Gerar últimos 7 dias para o calendário
-  const getLastSevenDays = () => {
-    const days = []
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(today.getDate() - i)
-      days.push(date)
-    }
-    return days
-  }
 
-  const lastSevenDays = getLastSevenDays()
 
   // Buscar plano nutricional da IA
   useEffect(() => {
@@ -216,82 +205,13 @@ export function TrainingDietDashboard({ userProfile, onMarkComplete }: TrainingD
         />
       </div>
 
-      {/* Calendário de Treinos */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Histórico de Treinos - Últimos 7 Dias
-          </CardTitle>
-          <CardDescription>
-            Acompanhe sua consistência nos treinos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-7 gap-4">
-              {lastSevenDays.map((date, index) => {
-                const isToday = date.toDateString() === today.toDateString()
-                const isTrainingDay = shouldTrainOnDay(date, userProfile.daysPerWeek)
-                const completed = hasCompletedWorkout(date, userProfile)
-                const missed = hasMissedWorkout(date, userProfile)
 
-                return (
-                  <div key={index} className="text-center">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                    </div>
-                    <div 
-                      className={`
-                        h-12 w-12 rounded-full border-2 flex flex-col items-center justify-center mx-auto transition-all
-                        ${isToday ? 'ring-2 ring-primary ring-offset-2' : ''}
-                        ${completed ? 'bg-green-500 text-white border-green-500' : ''}
-                        ${missed ? 'bg-red-500 text-white border-red-500' : ''}
-                        ${isTrainingDay && !completed && !missed ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
-                        ${!isTrainingDay ? 'bg-gray-50 text-gray-500 border-gray-200' : ''}
-                      `}
-                    >
-                      <span className="text-xs">{date.getDate()}</span>
-                      <span className="text-xs">
-                        {completed && '✓'}
-                        {missed && '✗'}
-                        {!isTrainingDay && '—'}
-                        {isTrainingDay && !completed && !missed && '○'}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            
-            {/* Legenda */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-green-500"></div>
-                <span>Treino concluído</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-red-500"></div>
-                <span>Treino perdido</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-blue-50 border border-blue-200"></div>
-                <span>Treino programado</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-gray-50 border border-gray-200"></div>
-                <span>Descanso</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
       
       {/* Modal do Plano Nutricional */}
       <NutritionPlanModal
         isOpen={isNutritionModalOpen}
         onClose={() => setIsNutritionModalOpen(false)}
-        nutritionPlan={nutritionPlan || "Nenhum plano nutricional disponível"}
+        nutritionPlan={nutritionPlan || userProfile.aiNutritionPlan || "Nenhum plano nutricional disponível. Gere seus planos personalizados na seção 'Planos de IA' do menu."}
         userName={userProfile.userId}
       />
     </div>

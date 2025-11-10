@@ -1,5 +1,5 @@
 import React from "react"
-import { Calendar, CheckCircle, Clock, Plus } from "lucide-react"
+import { CheckCircle, Clock, Plus } from "lucide-react"
 import { Button } from "@/components/ui/actions/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/data-display/card"
 import { Badge } from "@/components/ui/feedback/badge"
@@ -23,18 +23,7 @@ export function RehabilitationDashboard({ userProfile, onMarkComplete }: Rehabil
   const hasCompletedToday = hasCompletedWorkout(today, userProfile)
   const hasMissedToday = hasMissedWorkout(today, userProfile)
   
-  // Gerar últimos 7 dias para o calendário
-  const getLastSevenDays = () => {
-    const days = []
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(today.getDate() - i)
-      days.push(date)
-    }
-    return days
-  }
 
-  const lastSevenDays = getLastSevenDays()
 
   return (
     <div className="space-y-6">
@@ -118,7 +107,7 @@ export function RehabilitationDashboard({ userProfile, onMarkComplete }: Rehabil
               </div>
             ) : (
               <div className="text-center py-6">
-                <Calendar className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <CheckCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                 <p className="text-muted-foreground">Hoje é seu dia de descanso!</p>
                 <p className="text-sm text-muted-foreground mt-1">
                   Aproveite para relaxar e permitir que seu corpo se recupere.
@@ -128,67 +117,7 @@ export function RehabilitationDashboard({ userProfile, onMarkComplete }: Rehabil
           </CardContent>
         </Card>
 
-        {/* Calendário Semanal */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Últimos 7 Dias
-            </CardTitle>
-            <CardDescription>
-              Histórico de exercícios realizados
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-7 gap-2">
-              {lastSevenDays.map((date, index) => {
-                const isToday = date.toDateString() === today.toDateString()
-                const isTrainingDay = shouldTrainOnDay(date, userProfile.daysPerWeek)
-                const completed = hasCompletedWorkout(date, userProfile)
-                const missed = hasMissedWorkout(date, userProfile)
-                
-                return (
-                  <div key={index} className="text-center">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                    </div>
-                    <div
-                      className={`
-                        w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium
-                        ${isToday ? 'ring-2 ring-primary' : ''}
-                        ${completed ? 'bg-green-500 text-white' : ''}
-                        ${missed ? 'bg-red-500 text-white' : ''}
-                        ${isTrainingDay && !completed && !missed ? 'bg-blue-100 text-blue-700' : ''}
-                        ${!isTrainingDay ? 'bg-gray-100 text-gray-500' : ''}
-                      `}
-                    >
-                      {date.getDate()}
-                    </div>
-                    <div className="text-xs mt-1">
-                      {completed && '✓'}
-                      {missed && '✗'}
-                      {!isTrainingDay && '-'}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span>Exercício realizado</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span>Exercício perdido</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-3 h-3 rounded-full bg-gray-100"></div>
-                <span>Dia de descanso</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   )

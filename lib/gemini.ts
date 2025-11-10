@@ -308,7 +308,6 @@ function generateStaticWorkoutPlan(userData: UserProfileData): string {
   return `# PLANO DE TREINO PERSONALIZADO
 
 ## ANÁLISE INICIAL
-- **Nome:** Usuário
 - **Idade:** ${userData.age} anos
 - **Objetivo:** ${goalText}
 - **Experiência:** ${userData.exerciseExperience}

@@ -9,6 +9,26 @@ interface NutritionPlanRendererProps {
 }
 
 export function NutritionPlanRenderer({ nutritionText }: NutritionPlanRendererProps) {
+  // Validar se há texto para processar
+  if (!nutritionText || nutritionText.trim() === '' || nutritionText.includes('Nenhum plano nutricional disponível')) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center">
+            <Utensils className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h4 className="font-medium mb-2">Nenhum Plano Nutricional Disponível</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Para visualizar seu plano nutricional personalizado, primeiro gere seus planos de IA.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Vá para: Menu → Planos de IA → Gerar Novo Plano
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   const lines = nutritionText.split('\n')
   let sections: Array<{
     title: string

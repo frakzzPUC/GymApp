@@ -8,6 +8,26 @@ interface WorkoutPlanRendererProps {
 }
 
 export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
+  // Validar se há texto para processar
+  if (!workoutText || workoutText.trim() === '' || workoutText === 'Nenhum plano de treino disponível. Gere seus planos personalizados na seção "Planos de IA" do menu.') {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center">
+            <Dumbbell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h4 className="font-medium mb-2">Nenhum Plano de Treino Disponível</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Para visualizar seu plano personalizado, primeiro gere seus planos de IA.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Vá para: Menu → Planos de IA → Gerar Novo Plano
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   const lines = workoutText.split('\n')
   let sections: Array<{
     title: string
@@ -110,22 +130,142 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               {getSectionIcon(section.type)}
-              {section.title}
+              {section.title
+                .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
+                .replace(/\*\*/g, '') // Remove qualquer ** restante
+                .replace(/^\d+\.\s*/, '') // Remove numeração
+                .trim()}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {section.content.map((item, itemIndex) => {
-                // Remover marcadores de lista
-                const cleanItem = item.replace(/^[-•*]\s*/, '').replace(/^\*\*|\*\*$/g, '')
+            {section.type === 'analysis' ? (
+              <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border border-blue-200">
+                <div className="space-y-3">
+                  {section.content.map((item, itemIndex) => {
+                    const cleanItem = item
+                      .replace(/^[-•*]\s*/, '')
+                      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém texto
+                      .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
+                      .replace(/\*\*/g, '') // Remove qualquer ** restante
+                      .replace(/- \*\*Nome\*\*:/gi, '') // Remove "- **Nome**:"
+                      .replace(/Nome:\s*\w+/gi, '') // Remove "Nome: [Nome]"
+                      .trim()
+                    
+                    if (cleanItem.includes(':')) {
+                      const [label, value] = cleanItem.split(':')
+                      const cleanLabel = label.replace(/^-\s*/, '').trim()
+                      const cleanValue = value.trim()
+                      
+                      // Pular se o label for "Nome" ou se estiver vazio
+                      if (cleanLabel.toLowerCase() === 'nome' || !cleanLabel || !cleanValue) {
+                        return null
+                      }
+                      
+                      return (
+                        <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-3 py-2 border-b border-blue-100 last:border-b-0">
+                          <span className="font-semibold text-sm text-blue-900">{cleanLabel}</span>
+                          <div className="md:col-span-2">
+                            <span className="inline-flex px-3 py-1 rounded-full text-sm bg-white border border-blue-200 text-blue-800">
+                              {cleanValue}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    }
+                    
+                    return cleanItem ? (
+                      <p key={itemIndex} className="text-sm text-blue-900 leading-relaxed">
+                        {cleanItem}
+                      </p>
+                    ) : null
+                  })}
+                </div>
+              </div>
+            ) : section.type === 'structure' ? (
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-200">
+                <div className="space-y-3">
+                  {section.content.map((item, itemIndex) => {
+                    const cleanItem = item
+                      .replace(/^[-•*]\s*/, '')
+                      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém texto
+                      .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
+                      .replace(/\*\*/g, '') // Remove qualquer ** restante
+                      .replace(/para\s+\w+/gi, '') // Remove "para [Nome]"
+                      .replace(/Nome:\s*\w+/gi, '') // Remove "Nome: [Nome]"
+                      .replace(/\*\*Nome\*\*:\s*\w+/gi, '') // Remove "**Nome**: [Nome]"
+                      .replace(/- \*\*Nome\*\*:/gi, '') // Remove "- **Nome**:"
+                      .trim()
+                    
+                    if (!cleanItem) return null
+                    
+                    if (cleanItem.includes(':')) {
+                      const [label, value] = cleanItem.split(':')
+                      const cleanLabel = label.replace(/^-\s*/, '').trim()
+                      const cleanValue = value.trim()
+                      
+                      // Pular se o label for "Nome" ou se estiver vazio
+                      if (cleanLabel.toLowerCase() === 'nome' || !cleanLabel || !cleanValue) {
+                        return null
+                      }
+                      
+                      return (
+                        <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-3 py-2 border-b border-purple-100 last:border-b-0">
+                          <span className="font-semibold text-sm text-purple-900">{cleanLabel}</span>
+                          <div className="md:col-span-2">
+                            <span className="inline-flex px-3 py-1 rounded-full text-sm bg-white border border-purple-200 text-purple-800">
+                              {cleanValue}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    }
+                    
+                    // Se for uma lista estruturada (Semana 1:, Segunda:, etc.)
+                    if (cleanItem.match(/^(Semana|Segunda|Terça|Quarta|Quinta|Sexta|Sábado|Domingo)/i)) {
+                      return (
+                        <div key={itemIndex} className="bg-white p-3 rounded-lg border border-purple-200">
+                          <span className="font-medium text-purple-900 text-sm">
+                            {cleanItem}
+                          </span>
+                        </div>
+                      )
+                    }
+                    
+                    return (
+                      <p key={itemIndex} className="text-sm text-purple-900 leading-relaxed">
+                        {cleanItem}
+                      </p>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {section.content.map((item, itemIndex) => {
+                // Remover marcadores de lista e formatação markdown
+                const cleanItem = item
+                  .replace(/^[-•*]\s*/, '') // Remove marcadores de lista
+                  .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém o texto
+                  .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
+                  .replace(/\*\*/g, '') // Remove qualquer ** restante
+                  .replace(/- \*\*Nome\*\*:/gi, '') // Remove "- **Nome**:"
+                  .replace(/Nome:\s*\w+/gi, '') // Remove "Nome: [Nome]"
+                  .trim()
                 
                 // Se é uma linha com informações de perfil (contém ":")
                 if (cleanItem.includes(':') && section.type === 'analysis') {
                   const [label, value] = cleanItem.split(':')
+                  const cleanLabel = label.replace(/^\*\*|\*\*$/g, '').replace(/^-\s*/, '').trim()
+                  const cleanValue = value.replace(/^\*\*|\*\*$/g, '').trim()
+                  
                   return (
-                    <div key={itemIndex} className="flex justify-between items-center py-1 border-b border-gray-200 last:border-b-0">
-                      <span className="font-medium text-sm">{label.replace(/^\*\*|\*\*$/g, '').trim()}</span>
-                      <Badge variant="outline">{value.trim()}</Badge>
+                    <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-2 py-2 border-b border-gray-100 last:border-b-0">
+                      <span className="font-medium text-sm text-gray-700">{cleanLabel}</span>
+                      <div className="md:col-span-2">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+                          {cleanValue}
+                        </Badge>
+                      </div>
                     </div>
                   )
                 }
@@ -173,7 +313,8 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                   </p>
                 )
               })}
-            </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

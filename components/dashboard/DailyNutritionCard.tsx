@@ -67,7 +67,17 @@ export function DailyNutritionCard({ meals, onViewFullPlan }: DailyNutritionCard
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {meals.slice(0, 3).map((meal, index) => (
+          {meals.length === 0 ? (
+            <div className="text-center py-6">
+              <Target className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-muted-foreground text-sm">Nenhuma refeição programada</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Gere seu plano nutricional para ver suas refeições
+              </p>
+            </div>
+          ) : (
+            <>
+              {meals.slice(0, 3).map((meal, index) => (
             <div key={index} className="bg-gray-50 rounded-lg p-4 border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -105,16 +115,18 @@ export function DailyNutritionCard({ meals, onViewFullPlan }: DailyNutritionCard
             </div>
           ))}
           
-          {meals.length > 3 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onViewFullPlan}
-              className="w-full mt-2"
-            >
-              Ver mais {meals.length - 3} refeições
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
+              {meals.length > 3 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={onViewFullPlan}
+                  className="w-full mt-2"
+                >
+                  Ver mais {meals.length - 3} refeições
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              )}
+            </>
           )}
         </div>
       </CardContent>

@@ -111,8 +111,9 @@ export const TodayWorkout = ({ onMarkComplete }: TodayWorkoutProps) => {
       {/* Botão para ver plano completo */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
         <WorkoutPlanModal
-          workoutPlan={aiPlans?.latest?.workoutPlan || ''}
+          workoutPlan={aiPlans?.latest?.workoutPlan || 'Nenhum plano de treino disponível. Gere seus planos personalizados na seção "Planos de IA" do menu.'}
           aiPlan={aiPlans?.latest?.workoutPlan}
+          userName="Usuário"
         />
       </div>
     </div>

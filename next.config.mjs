@@ -8,6 +8,15 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ['static.exercisedb.dev'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'static.exercisedb.dev',
+        port: '',
+        pathname: '/media/**',
+      },
+    ],
   },
 }
 
