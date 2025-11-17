@@ -1,21 +1,36 @@
-import React from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/actions/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/data-display/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/navigation/tabs"
-import { Loader2, Sparkles, Target, Utensils, CheckCircle } from "lucide-react"
-import { PlanFormatter } from "./PlanFormatter"
-import { PlansData } from "@/hooks/useAIPlans"
+import React from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/actions/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/data-display/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/navigation/tabs";
+import { Loader2, Sparkles, Target, Utensils, CheckCircle } from "lucide-react";
+import { PlanFormatter } from "./PlanFormatter";
+import { PlansData } from "@/hooks/useAIPlans";
 
 interface PlansDisplayProps {
-  plansData: PlansData
-  isGenerating: boolean
-  onRegeneratePlans: () => void
+  plansData: PlansData;
+  isGenerating: boolean;
+  onRegeneratePlans: () => void;
 }
 
-export function PlansDisplay({ plansData, isGenerating, onRegeneratePlans }: PlansDisplayProps) {
-  const router = useRouter()
-  const { workoutPlan, nutritionPlan, generatedAt } = plansData
+export function PlansDisplay({
+  plansData,
+  isGenerating,
+  onRegeneratePlans,
+}: PlansDisplayProps) {
+  const router = useRouter();
+  const { workoutPlan, nutritionPlan, generatedAt } = plansData;
 
   return (
     <div className="space-y-6">
@@ -25,7 +40,8 @@ export function PlansDisplay({ plansData, isGenerating, onRegeneratePlans }: Pla
           Planos gerados com sucesso!
           {generatedAt && (
             <span className="text-sm">
-              em {generatedAt.toLocaleDateString('pt-BR')} às {generatedAt.toLocaleTimeString('pt-BR')}
+              em {generatedAt.toLocaleDateString("pt-BR")} às{" "}
+              {generatedAt.toLocaleTimeString("pt-BR")}
             </span>
           )}
         </div>
@@ -42,7 +58,7 @@ export function PlansDisplay({ plansData, isGenerating, onRegeneratePlans }: Pla
             Plano Nutricional
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="workout">
           <Card>
             <CardHeader>
@@ -51,15 +67,16 @@ export function PlansDisplay({ plansData, isGenerating, onRegeneratePlans }: Pla
                 Seu Plano de Treino Personalizado
               </CardTitle>
               <CardDescription>
-                Criado especialmente para seus objetivos, nível de condicionamento e preferências
+                Criado especialmente para seus objetivos, nível de
+                condicionamento e preferências
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <PlanFormatter text={workoutPlan} />
+              <PlanFormatter text={workoutPlan || ""} />
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="nutrition">
           <Card>
             <CardHeader>
@@ -68,19 +85,20 @@ export function PlansDisplay({ plansData, isGenerating, onRegeneratePlans }: Pla
                 Seu Plano Nutricional Personalizado
               </CardTitle>
               <CardDescription>
-                Alimentação balanceada considerando suas preferências, restrições e objetivos
+                Alimentação balanceada considerando suas preferências,
+                restrições e objetivos
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <PlanFormatter text={nutritionPlan} />
+              <PlanFormatter text={nutritionPlan || ""} />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
       <div className="text-center space-y-4">
-        <Button 
-          onClick={onRegeneratePlans} 
+        <Button
+          onClick={onRegeneratePlans}
           disabled={isGenerating}
           variant="outline"
           className="mr-4"
@@ -97,8 +115,8 @@ export function PlansDisplay({ plansData, isGenerating, onRegeneratePlans }: Pla
             </>
           )}
         </Button>
-        
-        <Button 
+
+        <Button
           onClick={() => router.push("/dashboard")}
           className="bg-emerald-600 hover:bg-emerald-700"
         >
@@ -106,5 +124,5 @@ export function PlansDisplay({ plansData, isGenerating, onRegeneratePlans }: Pla
         </Button>
       </div>
     </div>
-  )
+  );
 }

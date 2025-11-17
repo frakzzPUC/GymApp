@@ -1,79 +1,81 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = process.env.GEMINI_API_KEY
+const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
-  throw new Error("GEMINI_API_KEY não está definida nas variáveis de ambiente")
+  throw new Error("GEMINI_API_KEY não está definida nas variáveis de ambiente");
 }
 
-const genAI = new GoogleGenerativeAI(apiKey)
+const genAI = new GoogleGenerativeAI(apiKey);
 
 // Tentando com versão mais básica que deve estar disponível
-const model = genAI.getGenerativeModel({ 
-  model: "gemini-pro"
-})
+const model = genAI.getGenerativeModel({
+  model: "gemini-pro",
+});
 
 // Interface para dados do usuário
 export interface UserProfileData {
   // Dados pessoais
-  age: number
-  gender: 'male' | 'female' | 'other'
-  weight: number
-  height: number
-  
+  age: number;
+  gender: "male" | "female" | "other";
+  weight: number;
+  height: number;
+
   // Atividade e experiência
-  activityLevel: string
-  exerciseExperience: string
-  fitnessLevel: string
-  
+  activityLevel: string;
+  exerciseExperience: string;
+  fitnessLevel: string;
+
   // Condições médicas
-  medicalConditions: string[]
-  injuries?: string
-  medications?: string
-  
+  medicalConditions: string[];
+  injuries?: string;
+  medications?: string;
+
   // Objetivos
-  primaryGoal: string
-  secondaryGoals: string[]
-  
+  primaryGoal: string;
+  secondaryGoals: string[];
+
   // Preferências de treino
-  daysPerWeek: number
-  timePerDay: number
-  preferredTime: string
-  workoutLocation: string
-  availableEquipment: string[]
-  exercisePreferences: string[]
-  exerciseDislikes: string[]
-  
+  daysPerWeek: number;
+  timePerDay: number;
+  preferredTime: string;
+  workoutLocation: string;
+  availableEquipment: string[];
+  exercisePreferences: string[];
+  exerciseDislikes: string[];
+
   // Dieta
-  wantsDiet: boolean
-  dietaryRestrictions: string[]
-  allergies?: string
-  currentEatingHabits: string
-  mealsPerDay: number
-  waterIntake: string
-  supplementUsage?: string
-  budgetPreference: string
-  cookingSkill: string
-  mealPrepTime: string
-  
+  wantsDiet: boolean;
+  dietaryRestrictions: string[];
+  allergies?: string;
+  currentEatingHabits: string;
+  mealsPerDay: number;
+  waterIntake: string;
+  supplementUsage?: string;
+  budgetPreference: string;
+  cookingSkill: string;
+  mealPrepTime: string;
+
   // Estilo de vida
-  profession: string
-  stressLevel: string
-  sleepHours: number
-  sleepQuality: string
-  
+  profession: string;
+  stressLevel: string;
+  sleepHours: number;
+  sleepQuality: string;
+
   // Motivação
-  motivation: string
-  obstacles?: string
-  supportSystem?: string
-  previousAttempts?: string
+  motivation: string;
+  obstacles?: string;
+  supportSystem?: string;
+  previousAttempts?: string;
 
   // Tipo de dieta (se aplicável)
-  dietType?: string
+  dietType?: string;
 }
 
 // Função para gerar plano de treino personalizado
-export async function generateWorkoutPlan(userData: UserProfileData): Promise<string | null> {
+export async function generateWorkoutPlan(
+  userData: UserProfileData
+): Promise<string | null> {
   const prompt = `
 Como um educador físico experiente, crie um plano de treino personalizado detalhado para:
 
@@ -86,16 +88,16 @@ DADOS DO USUÁRIO:
 - Experiência: ${userData.exerciseExperience}
 - Nível fitness: ${userData.fitnessLevel}
 - Objetivo principal: ${userData.primaryGoal}
-- Objetivos secundários: ${userData.secondaryGoals.join(', ')}
+- Objetivos secundários: ${userData.secondaryGoals.join(", ")}
 - Dias por semana: ${userData.daysPerWeek}
 - Tempo por dia: ${userData.timePerDay} minutos
 - Horário preferido: ${userData.preferredTime}
 - Local: ${userData.workoutLocation}
-- Equipamentos disponíveis: ${userData.availableEquipment.join(', ')}
-- Preferências: ${userData.exercisePreferences.join(', ')}
-- Não gosta de: ${userData.exerciseDislikes.join(', ')}
-- Condições médicas: ${userData.medicalConditions.join(', ')}
-- Lesões: ${userData.injuries || 'Nenhuma'}
+- Equipamentos disponíveis: ${userData.availableEquipment.join(", ")}
+- Preferências: ${userData.exercisePreferences.join(", ")}
+- Não gosta de: ${userData.exerciseDislikes.join(", ")}
+- Condições médicas: ${userData.medicalConditions.join(", ")}
+- Lesões: ${userData.injuries || "Nenhuma"}
 - Profissão: ${userData.profession}
 - Nível de estresse: ${userData.stressLevel}
 - Horas de sono: ${userData.sleepHours}h
@@ -134,25 +136,27 @@ CRIE UM PLANO ESTRUTURADO COM:
    - Como superar obstáculos
 
 Seja específico, técnico e motivador. Use linguagem acessível mas profissional.
-`
+`;
 
   try {
-    console.log("Gerando plano de treino com Gemini...")
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
-    console.log("Plano de treino gerado com sucesso, tamanho:", text.length)
-    return text
+    console.log("Gerando plano de treino com Gemini...");
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    console.log("Plano de treino gerado com sucesso, tamanho:", text.length);
+    return text;
   } catch (error) {
-    console.error('Erro ao gerar plano de treino:', error)
-    return null
+    console.error("Erro ao gerar plano de treino:", error);
+    return null;
   }
 }
 
 // Função para gerar plano alimentar personalizado
-export async function generateNutritionPlan(userData: UserProfileData): Promise<string | null> {
+export async function generateNutritionPlan(
+  userData: UserProfileData
+): Promise<string | null> {
   if (!userData.wantsDiet) {
-    return "Usuário optou por não receber plano alimentar."
+    return "Usuário optou por não receber plano alimentar.";
   }
 
   const prompt = `
@@ -165,16 +169,16 @@ DADOS DO USUÁRIO:
 - Altura: ${userData.height}cm
 - Nível de atividade: ${userData.activityLevel}
 - Objetivo principal: ${userData.primaryGoal}
-- Restrições alimentares: ${userData.dietaryRestrictions.join(', ')}
-- Alergias: ${userData.allergies || 'Nenhuma'}
+- Restrições alimentares: ${userData.dietaryRestrictions.join(", ")}
+- Alergias: ${userData.allergies || "Nenhuma"}
 - Hábitos alimentares atuais: ${userData.currentEatingHabits}
 - Refeições por dia: ${userData.mealsPerDay}
 - Consumo de água: ${userData.waterIntake}L
-- Suplementos: ${userData.supplementUsage || 'Nenhum'}
+- Suplementos: ${userData.supplementUsage || "Nenhum"}
 - Orçamento: ${userData.budgetPreference}
 - Habilidade culinária: ${userData.cookingSkill}
 - Tempo para preparo: ${userData.mealPrepTime}
-- Tipo de dieta: ${userData.dietType || 'Balanceada'}
+- Tipo de dieta: ${userData.dietType || "Balanceada"}
 - Profissão: ${userData.profession}
 - Nível de estresse: ${userData.stressLevel}
 - Horas de sono: ${userData.sleepHours}h
@@ -228,83 +232,95 @@ CRIE UM PLANO ESTRUTURADO COM:
    - Sinais de que está funcionando
 
 Considere o orçamento, tempo disponível e habilidades culinárias. Seja prático e acessível.
-`
+`;
 
   try {
-    console.log("Gerando plano alimentar com Gemini...")
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
-    console.log("Plano alimentar gerado com sucesso, tamanho:", text.length)
-    return text
+    console.log("Gerando plano alimentar com Gemini...");
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    console.log("Plano alimentar gerado com sucesso, tamanho:", text.length);
+    return text;
   } catch (error) {
-    console.error('Erro ao gerar plano alimentar:', error)
-    return null
+    console.error("Erro ao gerar plano alimentar:", error);
+    return null;
   }
 }
 
 // Função para gerar plano completo (treino + dieta)
 export async function generateCompletePlan(userData: UserProfileData): Promise<{
-  workoutPlan: string
-  nutritionPlan: string
+  workoutPlan: string;
+  nutritionPlan: string;
 }> {
   try {
-    console.log("=== INÍCIO GERAÇÃO GEMINI ===")
+    console.log("=== INÍCIO GERAÇÃO GEMINI ===");
     console.log("Dados do usuário recebidos:", {
       age: userData.age,
       gender: userData.gender,
       primaryGoal: userData.primaryGoal,
-      wantsDiet: userData.wantsDiet
-    })
+      wantsDiet: userData.wantsDiet,
+    });
 
-    console.log("Iniciando geração paralela de planos...")
-    
+    console.log("Iniciando geração paralela de planos...");
+
     const [workoutPlan, nutritionPlan] = await Promise.all([
       generateWorkoutPlan(userData),
-      generateNutritionPlan(userData)
-    ])
+      generateNutritionPlan(userData),
+    ]);
 
     // Se algum dos planos falhou (retornou null), usa fallback
     if (!workoutPlan || !nutritionPlan) {
-      console.log('Um ou ambos os planos falharam, usando fallback...')
+      console.log("Um ou ambos os planos falharam, usando fallback...");
       return {
         workoutPlan: workoutPlan || generateStaticWorkoutPlan(userData),
-        nutritionPlan: nutritionPlan || generateStaticNutritionPlan(userData)
-      }
+        nutritionPlan: nutritionPlan || generateStaticNutritionPlan(userData),
+      };
     }
 
-    console.log("Planos gerados com sucesso!")
-    console.log("Tamanho do plano de treino:", workoutPlan.length, "caracteres")
-    console.log("Tamanho do plano de nutrição:", nutritionPlan.length, "caracteres")
-    console.log("=== FIM GERAÇÃO GEMINI ===")
+    console.log("Planos gerados com sucesso!");
+    console.log(
+      "Tamanho do plano de treino:",
+      workoutPlan.length,
+      "caracteres"
+    );
+    console.log(
+      "Tamanho do plano de nutrição:",
+      nutritionPlan.length,
+      "caracteres"
+    );
+    console.log("=== FIM GERAÇÃO GEMINI ===");
 
     return {
       workoutPlan,
-      nutritionPlan
-    }
+      nutritionPlan,
+    };
   } catch (error) {
-    console.error('=== ERRO NA GERAÇÃO GEMINI ===')
-    console.error('Erro completo:', error)
+    console.error("=== ERRO NA GERAÇÃO GEMINI ===");
+    console.error("Erro completo:", error);
     if (error instanceof Error) {
-      console.error('Mensagem:', error.message)
-      console.error('Stack:', error.stack)
+      console.error("Mensagem:", error.message);
+      console.error("Stack:", error.stack);
     }
-    
-    console.log('Fallback: Gerando planos estáticos personalizados...')
-    
+
+    console.log("Fallback: Gerando planos estáticos personalizados...");
+
     // Fallback com planos estáticos personalizados
     return {
       workoutPlan: generateStaticWorkoutPlan(userData),
-      nutritionPlan: generateStaticNutritionPlan(userData)
-    }
+      nutritionPlan: generateStaticNutritionPlan(userData),
+    };
   }
 }
 
 // Função de fallback para plano de treino estático
 function generateStaticWorkoutPlan(userData: UserProfileData): string {
-  const goalText = userData.primaryGoal === 'gain-muscle' ? 'ganho de massa muscular' : 
-                   userData.primaryGoal === 'lose-weight' ? 'perda de peso' : 'manutenção';
-  
+  const goalText =
+    userData.primaryGoal === "gain-muscle"
+      ? "ganho de massa muscular"
+      : userData.primaryGoal === "lose-weight"
+      ? "perda de peso"
+      : "manutenção";
+
   return `# PLANO DE TREINO PERSONALIZADO
 
 ## ANÁLISE INICIAL
@@ -316,7 +332,11 @@ function generateStaticWorkoutPlan(userData: UserProfileData): string {
 
 ## ESTRUTURA DO TREINO
 **Divisão:** ${userData.daysPerWeek} dias por semana
-**Foco:** ${userData.primaryGoal === 'gain-muscle' ? 'Hipertrofia muscular' : 'Condicionamento geral'}
+**Foco:** ${
+    userData.primaryGoal === "gain-muscle"
+      ? "Hipertrofia muscular"
+      : "Condicionamento geral"
+  }
 
 ## TREINO A - PEITO, OMBROS E TRÍCEPS
 1. **Aquecimento (10 min)**
@@ -366,7 +386,9 @@ function generateStaticWorkoutPlan(userData: UserProfileData): string {
 - Descanso entre séries: 60-90 segundos
 - Progressão: Aumente carga quando conseguir fazer todas as repetições
 - Hidratação: Beba água durante todo o treino
-- Frequência: ${userData.daysPerWeek}x por semana com 1 dia de descanso entre treinos
+- Frequência: ${
+    userData.daysPerWeek
+  }x por semana com 1 dia de descanso entre treinos
 
 ## DICAS MOTIVACIONAIS
 - Seja consistente, resultados levam tempo
@@ -374,27 +396,33 @@ function generateStaticWorkoutPlan(userData: UserProfileData): string {
 - Celebrate pequenas vitórias
 - Mantenha um diário de treinos
 
-*Plano gerado automaticamente baseado no seu perfil*`
+*Plano gerado automaticamente baseado no seu perfil*`;
 }
 
 // Função de fallback para plano nutricional estático
 function generateStaticNutritionPlan(userData: UserProfileData): string {
   if (!userData.wantsDiet) {
-    return "Usuário optou por não receber plano alimentar."
+    return "Usuário optou por não receber plano alimentar.";
   }
 
-  const calorias = userData.primaryGoal === 'gain-muscle' ? 2500 : 
-                   userData.primaryGoal === 'lose-weight' ? 1800 : 2200;
+  const calorias =
+    userData.primaryGoal === "gain-muscle"
+      ? 2500
+      : userData.primaryGoal === "lose-weight"
+      ? 1800
+      : 2200;
 
   return `# PLANO ALIMENTAR PERSONALIZADO
 
 ## ANÁLISE NUTRICIONAL
-- **Objetivo:** ${userData.primaryGoal === 'gain-muscle' ? 'Ganho de massa' : 'Manutenção'}
+- **Objetivo:** ${
+    userData.primaryGoal === "gain-muscle" ? "Ganho de massa" : "Manutenção"
+  }
 - **Calorias diárias:** ${calorias} kcal
 - **Refeições:** ${userData.mealsPerDay} por dia
-- **Proteínas:** ${Math.round(calorias * 0.3 / 4)}g
-- **Carboidratos:** ${Math.round(calorias * 0.4 / 4)}g
-- **Gorduras:** ${Math.round(calorias * 0.3 / 9)}g
+- **Proteínas:** ${Math.round((calorias * 0.3) / 4)}g
+- **Carboidratos:** ${Math.round((calorias * 0.4) / 4)}g
+- **Gorduras:** ${Math.round((calorias * 0.3) / 9)}g
 
 ## CARDÁPIO SEMANAL
 
@@ -457,7 +485,7 @@ function generateStaticNutritionPlan(userData: UserProfileData): string {
 - Whey protein: 1 dose pós-treino
 - Multivitamínico: 1 cápsula pela manhã
 
-*Plano gerado automaticamente baseado no seu perfil*`
+*Plano gerado automaticamente baseado no seu perfil*`;
 }
 
-export default genAI
+export default genAI;

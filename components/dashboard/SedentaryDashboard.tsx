@@ -1,55 +1,64 @@
-import React from "react"
-import { Activity, Calendar, Target, TrendingUp } from "lucide-react"
-import { Button } from "@/components/ui/actions/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/data-display/card"
-import { Progress } from "@/components/ui/feedback/progress"
-import { UserProfile } from "@/hooks/useDashboard"
-import { SedentaryStats } from "./SedentaryStats"
-import { 
-  hasCompletedWorkout, 
-  hasMissedWorkout, 
+import React from "react";
+import { Activity, Calendar, Target, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/actions/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/data-display/card";
+import { Progress } from "@/components/ui/feedback/progress";
+import { UserProfile } from "@/hooks/useDashboard";
+import { SedentaryStats } from "./SedentaryStats";
+import {
+  hasCompletedWorkout,
+  hasMissedWorkout,
   getTodaysActivities,
   shouldTrainOnDay,
-  calculateStats 
-} from "@/lib/dashboard-utils"
+  calculateStats,
+} from "@/lib/dashboard-utils";
 
 interface SedentaryDashboardProps {
-  userProfile: UserProfile
-  onMarkComplete: (activityId: string) => Promise<void>
+  userProfile: UserProfile;
+  onMarkComplete: (activityId: string) => Promise<void>;
 }
 
-export function SedentaryDashboard({ userProfile, onMarkComplete }: SedentaryDashboardProps) {
-  const todaysActivities = getTodaysActivities(userProfile)
-  const today = new Date()
-  const stats = calculateStats(userProfile)
-  
-
+export function SedentaryDashboard({
+  userProfile,
+  onMarkComplete,
+}: SedentaryDashboardProps) {
+  const todaysActivities = getTodaysActivities(userProfile);
+  const today = new Date();
+  const stats = calculateStats(userProfile);
 
   // Metas diárias sugeridas
   const dailyGoals = [
-    { id: '1', title: 'Caminhar 10 minutos', completed: false },
-    { id: '2', title: 'Alongamento matinal', completed: false },
-    { id: '3', title: 'Subir escadas', completed: false },
-    { id: '4', title: 'Pausas a cada hora', completed: false },
-  ]
+    { id: "1", title: "Caminhar 10 minutos", completed: false },
+    { id: "2", title: "Alongamento matinal", completed: false },
+    { id: "3", title: "Subir escadas", completed: false },
+    { id: "4", title: "Pausas a cada hora", completed: false },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Header com saudação */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Programa Anti-Sedentarismo</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Programa Anti-Sedentarismo
+          </h1>
           <p className="text-muted-foreground">
             Pequenos passos para uma vida mais ativa
           </p>
         </div>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">
-            {today.toLocaleDateString('pt-BR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {today.toLocaleDateString("pt-BR", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             })}
           </p>
         </div>
@@ -78,16 +87,22 @@ export function SedentaryDashboard({ userProfile, onMarkComplete }: SedentaryDas
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">Meta de Passos</span>
-                    <span>{userProfile.progress?.stepsToday || 0} / {stats.stepsGoal}</span>
+                    <span>
+                      {userProfile.progress?.stepsToday || 0} /{" "}
+                      {stats.stepsGoal}
+                    </span>
                   </div>
                   <Progress value={stats.stepsProgress} className="h-2" />
                 </div>
               )}
-              
+
               {/* Metas diárias */}
               <div className="space-y-3">
                 {dailyGoals.map((goal) => (
-                  <div key={goal.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={goal.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
                     <span className="text-sm">{goal.title}</span>
                     <Button
                       size="sm"
@@ -100,15 +115,22 @@ export function SedentaryDashboard({ userProfile, onMarkComplete }: SedentaryDas
                   </div>
                 ))}
               </div>
-              
+
               {todaysActivities.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="font-medium text-sm">Atividades Programadas</h4>
+                  <h4 className="font-medium text-sm">
+                    Atividades Programadas
+                  </h4>
                   {todaysActivities.map((activity) => (
-                    <div key={activity._id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={activity._id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
                       <div className="flex-1">
                         <h5 className="font-medium text-sm">{activity.name}</h5>
-                        <p className="text-xs text-muted-foreground">{activity.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {activity.description}
+                        </p>
                       </div>
                       <Button
                         size="sm"
@@ -133,9 +155,7 @@ export function SedentaryDashboard({ userProfile, onMarkComplete }: SedentaryDas
               <TrendingUp className="h-5 w-5" />
               Progresso Semanal
             </CardTitle>
-            <CardDescription>
-              Sua evolução nos últimos 7 dias
-            </CardDescription>
+            <CardDescription>Sua evolução nos últimos 7 dias</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -147,25 +167,23 @@ export function SedentaryDashboard({ userProfile, onMarkComplete }: SedentaryDas
                 </div>
                 <Progress value={stats.weeklyProgress} className="h-3" />
               </div>
-              
 
-              
               {/* Dicas motivacionais */}
               <div className="p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <Activity className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">Dica de Hoje</span>
+                  <span className="text-sm font-medium text-blue-800">
+                    Dica de Hoje
+                  </span>
                 </div>
-                <p className="text-sm text-blue-700">
-                  {getDailyTip()}
-                </p>
+                <p className="text-sm text-blue-700">{getDailyTip()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
 
 // Função para obter dica diária baseada no dia da semana
@@ -177,9 +195,9 @@ function getDailyTip(): string {
     "Estacione mais longe ou desça um ponto antes no transporte público.",
     "Faça exercícios de alongamento durante os intervalos.",
     "Dance sua música favorita por alguns minutos.",
-    "Caminhe enquanto fala ao telefone quando possível."
-  ]
-  
-  const today = new Date()
-  return tips[today.getDay()]
+    "Caminhe enquanto fala ao telefone quando possível.",
+  ];
+
+  const today = new Date();
+  return tips[today.getDay()];
 }
