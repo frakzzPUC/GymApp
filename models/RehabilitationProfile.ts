@@ -6,10 +6,93 @@ const RehabilitationProfileSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  // Informações básicas
   painAreas: {
     type: [String],
     required: true,
   },
+  age: {
+    type: Number,
+    required: true,
+  },
+  gender: {
+    type: String,
+    enum: ["male", "female", "other"],
+    required: true,
+  },
+  
+  // Histórico médico
+  injuryType: {
+    type: String,
+    required: true,
+  },
+  injuryDuration: {
+    type: String,
+    required: true,
+  },
+  painLevel: {
+    type: Number,
+    min: 1,
+    max: 10,
+    required: true,
+  },
+  medicalTreatment: {
+    type: String,
+    required: true,
+  },
+  medications: {
+    type: [String],
+    default: [],
+  },
+  surgeryHistory: {
+    type: String,
+    default: "none",
+  },
+  
+  // Limitações e atividades
+  dailyActivities: {
+    type: [String],
+    required: true,
+  },
+  movementLimitations: {
+    type: [String],
+    required: true,
+  },
+  previousPhysioTherapy: {
+    type: String,
+    required: true,
+  },
+  exerciseExperience: {
+    type: String,
+    required: true,
+  },
+  
+  // Objetivos e estilo de vida
+  rehabGoals: {
+    type: [String],
+    required: true,
+  },
+  timeAvailability: {
+    type: String,
+    required: true,
+  },
+  homeEnvironment: {
+    type: String,
+    required: true,
+  },
+  workType: {
+    type: String,
+    required: true,
+  },
+  sleepQuality: {
+    type: String,
+    required: true,
+  },
+  stressLevel: {
+    type: String,
+    required: true,
+  },
+  
   exercises: {
     type: [
       {

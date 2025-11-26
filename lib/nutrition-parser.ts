@@ -58,8 +58,13 @@ export const parseNutritionPlan = (nutritionText: string): MealPlan[] => {
           })
         }
         
-        // Iniciar nova refeição
+        // Iniciar nova refeição - limpar formatação
         currentMeal = mealMatch[1]
+          .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém texto
+          .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
+          .replace(/\*\*/g, '') // Remove qualquer ** restante
+          .trim()
+        
         mealFoods = []
         mealCalories = parseInt(mealMatch[2])
         
@@ -70,6 +75,11 @@ export const parseNutritionPlan = (nutritionText: string): MealPlan[] => {
         const simpleMealMatch = line.match(/(café da manhã|lanche da manhã|lanche manhã|lanche da tarde|lanche tarde|almoço|jantar|colação|ceia)/i)
         if (simpleMealMatch) {
           currentMeal = simpleMealMatch[1]
+            .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém texto
+            .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
+            .replace(/\*\*/g, '') // Remove qualquer ** restante
+            .trim()
+          
           mealFoods = []
           mealCalories = 0
           console.log(`Refeição encontrada (sem calorias): ${currentMeal}`)
@@ -80,10 +90,24 @@ export const parseNutritionPlan = (nutritionText: string): MealPlan[] => {
         if (line.startsWith('-') || line.match(/^\d+\./) || 
             (line.length > 5 && !line.includes('##') && !line.includes('**') && !lowerLine.includes('orientações'))) {
           
-          let food = line.replace(/^[-•\d\.\s]+/, '').trim()
-          food = food.replace(/^\*\*|\*\*$/g, '')
+          let food = line
+            .replace(/^[-•\d\.\s]+/, '') // Remove marcadores e numeração
+            .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém texto
+            .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
+            .replace(/\*\*/g, '') // Remove qualquer ** restante
+            .replace(/^[-•*]\s*/, '') // Remove marcadores de lista
+            .replace(/\([^)]*kcal\)/gi, '') // Remove (XXX kcal)
+            .replace(/\([^)]*calorias?\)/gi, '') // Remove (XXX calorias)
+            .replace(/\d+g\s+de\s+/gi, '') // Remove "150g de"
+            .replace(/\d+\s*ml\s+de\s+/gi, '') // Remove "200ml de"
+            .replace(/\d+\s*colheres?\s+(de\s+)?/gi, '') // Remove "2 colheres de"
+            .replace(/\d+\s*fatias?\s+de\s+/gi, '') // Remove "2 fatias de"
+            .replace(/\d+\s*unidades?\s+de\s+/gi, '') // Remove "1 unidade de"
+            .replace(/\d+\s*xícaras?\s+(de\s+)?/gi, '') // Remove "1 xícara de"
+            .replace(/^\d+\s*/, '') // Remove números no início
+            .trim()
           
-          if (food.length > 3 && !food.includes('refeição') && !food.includes('plano') && !food.includes('lista')) {
+          if (food.length > 3 && !food.includes('refeição') && !food.includes('plano') && !food.includes('lista') && !food.includes('substituições') && !food.includes('modo de preparo')) {
             mealFoods.push(food)
           }
         }

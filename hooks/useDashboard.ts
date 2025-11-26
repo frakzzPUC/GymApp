@@ -17,6 +17,7 @@ export interface UserProfile {
   fitnessLevel?: string
   dietType?: string
   aiNutritionPlan?: string
+  rehabilitationPlan?: string
   // Dados de progresso
   progress: {
     caloriesGoal?: number
@@ -199,7 +200,24 @@ export function useDashboard() {
       const data = await response.json()
 
       if (data.success) {
-        setUserProfile(data.data)
+        let profileData = data.data
+        
+        // Para reabilitação, também buscar planos AI se não tiver rehabilitationPlan
+        if (currentProgramType === "rehabilitation" && !profileData.rehabilitationPlan) {
+          try {
+            const aiPlansResponse = await fetch("/api/ai-plans")
+            if (aiPlansResponse.ok) {
+              const aiPlansData = await aiPlansResponse.json()
+              if (aiPlansData.success && aiPlansData.data?.latest?.rehabilitationPlan) {
+                profileData.rehabilitationPlan = aiPlansData.data.latest.rehabilitationPlan
+              }
+            }
+          } catch (aiError) {
+            console.log("Erro ao buscar planos AI para reabilitação:", aiError)
+          }
+        }
+        
+        setUserProfile(profileData)
         if (!programType) {
           setProgramType(currentProgramType)
         }

@@ -2,29 +2,35 @@ import { useState } from "react"
 import { useSession } from "next-auth/react"
 
 export interface SedentaryFormData {
-  weight: string
-  height: string
+  age: string
   gender: string
-  daysPerWeek: string
-  timePerDay: string
+  motivation: string
+  primaryGoal: string
+  currentActivityLevel: string
+  availableTime: string
+  preferredActivities: string
 }
 
 export interface SedentaryFormErrors {
-  weight?: string
-  height?: string
+  age?: string
   gender?: string
-  daysPerWeek?: string
-  timePerDay?: string
+  motivation?: string
+  primaryGoal?: string
+  currentActivityLevel?: string
+  availableTime?: string
+  preferredActivities?: string
 }
 
 export function useSedentaryForm() {
   const { update } = useSession()
   const [formData, setFormData] = useState<SedentaryFormData>({
-    weight: "",
-    height: "",
+    age: "",
     gender: "",
-    daysPerWeek: "",
-    timePerDay: ""
+    motivation: "",
+    primaryGoal: "",
+    currentActivityLevel: "",
+    availableTime: "",
+    preferredActivities: ""
   })
   const [errors, setErrors] = useState<SedentaryFormErrors>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -47,18 +53,11 @@ export function useSedentaryForm() {
   const validateForm = (): boolean => {
     const newErrors: SedentaryFormErrors = {}
 
-    // Validar peso
-    if (!formData.weight) {
-      newErrors.weight = "Peso é obrigatório"
-    } else if (Number.parseFloat(formData.weight) <= 0 || Number.parseFloat(formData.weight) > 300) {
-      newErrors.weight = "Peso deve estar entre 1 e 300 kg"
-    }
-
-    // Validar altura
-    if (!formData.height) {
-      newErrors.height = "Altura é obrigatória"
-    } else if (Number.parseFloat(formData.height) <= 0 || Number.parseFloat(formData.height) > 250) {
-      newErrors.height = "Altura deve estar entre 1 e 250 cm"
+    // Validar idade
+    if (!formData.age) {
+      newErrors.age = "Idade é obrigatória"
+    } else if (Number.parseFloat(formData.age) < 16 || Number.parseFloat(formData.age) > 100) {
+      newErrors.age = "Idade deve estar entre 16 e 100 anos"
     }
 
     // Validar gênero
@@ -66,14 +65,29 @@ export function useSedentaryForm() {
       newErrors.gender = "Gênero é obrigatório"
     }
 
-    // Validar dias por semana
-    if (!formData.daysPerWeek) {
-      newErrors.daysPerWeek = "Selecione os dias disponíveis"
+    // Validar motivação
+    if (!formData.motivation) {
+      newErrors.motivation = "Conte-nos sua motivação"
     }
 
-    // Validar tempo por dia
-    if (!formData.timePerDay) {
-      newErrors.timePerDay = "Selecione o tempo disponível"
+    // Validar objetivo principal
+    if (!formData.primaryGoal) {
+      newErrors.primaryGoal = "Selecione seu objetivo principal"
+    }
+
+    // Validar nível de atividade atual
+    if (!formData.currentActivityLevel) {
+      newErrors.currentActivityLevel = "Selecione seu nível atual de atividade"
+    }
+
+    // Validar tempo disponível
+    if (!formData.availableTime) {
+      newErrors.availableTime = "Selecione o tempo que tem disponível"
+    }
+
+    // Validar atividades preferidas
+    if (!formData.preferredActivities) {
+      newErrors.preferredActivities = "Selecione pelo menos uma atividade de interesse"
     }
 
     setErrors(newErrors)
@@ -89,13 +103,7 @@ export function useSedentaryForm() {
       setIsLoading(true)
       setErrors({})
 
-      console.log("Enviando dados para a API:", {
-        gender: formData.gender,
-        weight: Number(formData.weight),
-        height: Number(formData.height),
-        daysPerWeek: Number(formData.daysPerWeek),
-        timePerDay: Number(formData.timePerDay),
-      })
+      console.log("Enviando dados para a API:", formData)
 
       const response = await fetch("/api/sedentary", {
         method: "POST",
@@ -103,11 +111,13 @@ export function useSedentaryForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          age: Number(formData.age),
           gender: formData.gender,
-          weight: Number(formData.weight),
-          height: Number(formData.height),
-          daysPerWeek: Number(formData.daysPerWeek),
-          timePerDay: Number(formData.timePerDay),
+          motivation: formData.motivation,
+          primaryGoal: formData.primaryGoal,
+          currentActivityLevel: formData.currentActivityLevel,
+          availableTime: formData.availableTime,
+          preferredActivities: formData.preferredActivities.split(",").filter(a => a.trim()),
         }),
       })
 

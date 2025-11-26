@@ -6,12 +6,97 @@ if (!apiKey) {
   throw new Error("GEMINI_API_KEY não está definida nas variáveis de ambiente");
 }
 
+// Configuração específica para a API do Gemini
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// Tentando com versão mais básica que deve estar disponível
-const model = genAI.getGenerativeModel({
-  model: "gemini-pro",
-});
+// Função para testar se a API key funciona com um prompt simples
+async function testApiKey(): Promise<boolean> {
+  // Usar a mesma lista de modelos
+  const modelsToTest = modelNames;
+
+  for (const modelName of modelsToTest) {
+    try {
+      console.log(`Testando API key com modelo: ${modelName}`);
+      const testModel = genAI.getGenerativeModel({ model: modelName });
+      const result = await testModel.generateContent("Diga apenas 'Olá'");
+      const response = await result.response;
+      const text = response.text();
+      console.log(`✅ Teste bem sucedido com ${modelName}:`, text);
+      return true;
+    } catch (error) {
+      console.log(
+        `❌ Falha com ${modelName}:`,
+        error instanceof Error ? error.message : String(error)
+      );
+      continue;
+    }
+  }
+
+  console.error("Nenhum modelo funcionou no teste da API key");
+  return false;
+}
+
+// Função para tentar gerar conteúdo com diferentes modelos
+async function tryGenerateContent(prompt: string): Promise<string | null> {
+  console.log(`Tentando gerar conteúdo. API Key presente: ${!!apiKey}`);
+  console.log(`API Key: ${apiKey?.substring(0, 10)}...`);
+
+  // Primeiro, testar se a API key funciona
+  const apiWorking = await testApiKey();
+  if (!apiWorking) {
+    console.error("API key não está funcionando");
+    return null;
+  }
+
+  console.log(`Modelos a tentar: ${modelNames.join(", ")}`);
+
+  for (const modelName of modelNames) {
+    try {
+      console.log(`\n=== Tentando modelo: ${modelName} ===`);
+      const currentModel = createModel(modelName);
+
+      console.log("Enviando prompt para o modelo...");
+      const result = await currentModel.generateContent(prompt);
+
+      console.log("Obtendo resposta...");
+      const response = await result.response;
+      const text = response.text();
+
+      console.log(
+        `✅ SUCESSO com modelo ${modelName}! Tamanho: ${text.length} caracteres`
+      );
+      return text;
+    } catch (error) {
+      console.log(`❌ Falha com modelo ${modelName}:`);
+      if (error instanceof Error) {
+        console.log(`   Erro: ${error.message}`);
+        console.log(`   Stack: ${error.stack?.substring(0, 200)}...`);
+      } else {
+        console.log(`   Erro desconhecido: ${String(error)}`);
+      }
+      continue;
+    }
+  }
+
+  console.error("❌ TODOS OS MODELOS FALHARAM");
+  return null;
+}
+
+// Tentando diferentes modelos que podem funcionar com API gratuita
+function createModel(modelName: string) {
+  console.log(`Criando modelo: ${modelName}`);
+  return genAI.getGenerativeModel({
+    model: modelName,
+  });
+}
+
+// Modelos em ordem de preferência (fallback para quando um estiver sobrecarregado)
+const modelNames = [
+  "gemini-pro-latest",
+];
+
+// Testar primeiro se conseguimos criar um modelo básico
+const model = createModel(modelNames[0]);
 
 // Interface para dados do usuário
 export interface UserProfileData {
@@ -118,12 +203,14 @@ CRIE UM PLANO ESTRUTURADO COM:
 3. **TREINOS DETALHADOS** (para cada dia da semana)
    - Nome do treino
    - Aquecimento (5-10 min)
-   - Exercícios principais com:
+   - Exercícios principais (MÍNIMO 5 EXERCÍCIOS POR TREINO) com:
      - Nome do exercício
      - Séries x Repetições
      - Tempo de descanso
      - Dicas de execução
    - Alongamento/volta à calma
+
+IMPORTANTE: Cada sessão de treino DEVE conter NO MÍNIMO 5 exercícios diferentes. Se o treino for de corpo inteiro, inclua pelo menos 5 exercícios variados. Se for divisão por grupos musculares, inclua pelo menos 5 exercícios específicos para os músculos trabalhados naquele dia.
 
 4. **ORIENTAÇÕES IMPORTANTES**
    - Como progredir
@@ -136,19 +223,18 @@ CRIE UM PLANO ESTRUTURADO COM:
    - Como superar obstáculos
 
 Seja específico, técnico e motivador. Use linguagem acessível mas profissional.
+
+REGRAS OBRIGATÓRIAS:
+- Cada dia de treino DEVE ter NO MÍNIMO 5 EXERCÍCIOS DIFERENTES
+- Liste todos os exercícios com nome completo, séries, repetições e tempo de descanso
+- Varie os exercícios para trabalhar diferentes músculos e movimentos
+- Inclua exercícios compostos e isolados quando apropriado
+- Se for treino de corpo inteiro: 5+ exercícios variados (pernas, peito, costas, ombros, braços)
+- Se for divisão: 5+ exercícios específicos para o(s) grupo(s) muscular(es) do dia
 `;
 
-  try {
-    console.log("Gerando plano de treino com Gemini...");
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    console.log("Plano de treino gerado com sucesso, tamanho:", text.length);
-    return text;
-  } catch (error) {
-    console.error("Erro ao gerar plano de treino:", error);
-    return null;
-  }
+  console.log("Gerando plano de treino com Gemini...");
+  return await tryGenerateContent(prompt);
 }
 
 // Função para gerar plano alimentar personalizado
@@ -234,17 +320,8 @@ CRIE UM PLANO ESTRUTURADO COM:
 Considere o orçamento, tempo disponível e habilidades culinárias. Seja prático e acessível.
 `;
 
-  try {
-    console.log("Gerando plano alimentar com Gemini...");
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    console.log("Plano alimentar gerado com sucesso, tamanho:", text.length);
-    return text;
-  } catch (error) {
-    console.error("Erro ao gerar plano alimentar:", error);
-    return null;
-  }
+  console.log("Gerando plano alimentar com Gemini...");
+  return await tryGenerateContent(prompt);
 }
 
 // Função para gerar plano completo (treino + dieta)
@@ -252,240 +329,314 @@ export async function generateCompletePlan(userData: UserProfileData): Promise<{
   workoutPlan: string;
   nutritionPlan: string;
 }> {
-  try {
-    console.log("=== INÍCIO GERAÇÃO GEMINI ===");
-    console.log("Dados do usuário recebidos:", {
-      age: userData.age,
-      gender: userData.gender,
-      primaryGoal: userData.primaryGoal,
-      wantsDiet: userData.wantsDiet,
-    });
+  console.log("=== INÍCIO GERAÇÃO GEMINI ===");
+  console.log("Dados do usuário recebidos:", {
+    age: userData.age,
+    gender: userData.gender,
+    primaryGoal: userData.primaryGoal,
+    wantsDiet: userData.wantsDiet,
+  });
 
-    console.log("Iniciando geração paralela de planos...");
+  console.log("Iniciando geração paralela de planos...");
 
-    const [workoutPlan, nutritionPlan] = await Promise.all([
-      generateWorkoutPlan(userData),
-      generateNutritionPlan(userData),
-    ]);
+  const [workoutPlan, nutritionPlan] = await Promise.all([
+    generateWorkoutPlan(userData),
+    generateNutritionPlan(userData),
+  ]);
 
-    // Se algum dos planos falhou (retornou null), usa fallback
-    if (!workoutPlan || !nutritionPlan) {
-      console.log("Um ou ambos os planos falharam, usando fallback...");
-      return {
-        workoutPlan: workoutPlan || generateStaticWorkoutPlan(userData),
-        nutritionPlan: nutritionPlan || generateStaticNutritionPlan(userData),
-      };
-    }
+  // Se algum dos planos falhou (retornou null), lança erro
+  if (!workoutPlan || !nutritionPlan) {
+    const failedPlans = [];
+    if (!workoutPlan) failedPlans.push("plano de treino");
+    if (!nutritionPlan) failedPlans.push("plano nutricional");
 
-    console.log("Planos gerados com sucesso!");
-    console.log(
-      "Tamanho do plano de treino:",
-      workoutPlan.length,
-      "caracteres"
+    console.error(
+      `Falha na geração dos seguintes planos: ${failedPlans.join(", ")}`
     );
-    console.log(
-      "Tamanho do plano de nutrição:",
-      nutritionPlan.length,
-      "caracteres"
+    throw new Error(
+      `Não foi possível gerar ${failedPlans.join(
+        " e "
+      )} via IA. Tente novamente.`
     );
-    console.log("=== FIM GERAÇÃO GEMINI ===");
-
-    return {
-      workoutPlan,
-      nutritionPlan,
-    };
-  } catch (error) {
-    console.error("=== ERRO NA GERAÇÃO GEMINI ===");
-    console.error("Erro completo:", error);
-    if (error instanceof Error) {
-      console.error("Mensagem:", error.message);
-      console.error("Stack:", error.stack);
-    }
-
-    console.log("Fallback: Gerando planos estáticos personalizados...");
-
-    // Fallback com planos estáticos personalizados
-    return {
-      workoutPlan: generateStaticWorkoutPlan(userData),
-      nutritionPlan: generateStaticNutritionPlan(userData),
-    };
   }
+
+  console.log("Planos gerados com sucesso pela IA!");
+  console.log("Tamanho do plano de treino:", workoutPlan.length, "caracteres");
+  console.log(
+    "Tamanho do plano de nutrição:",
+    nutritionPlan.length,
+    "caracteres"
+  );
+  console.log("=== FIM GERAÇÃO GEMINI ===");
+
+  return {
+    workoutPlan,
+    nutritionPlan,
+  };
 }
 
-// Função de fallback para plano de treino estático
-function generateStaticWorkoutPlan(userData: UserProfileData): string {
-  const goalText =
-    userData.primaryGoal === "gain-muscle"
-      ? "ganho de massa muscular"
-      : userData.primaryGoal === "lose-weight"
-      ? "perda de peso"
-      : "manutenção";
-
-  return `# PLANO DE TREINO PERSONALIZADO
-
-## ANÁLISE INICIAL
-- **Idade:** ${userData.age} anos
-- **Objetivo:** ${goalText}
-- **Experiência:** ${userData.exerciseExperience}
-- **Dias por semana:** ${userData.daysPerWeek}
-- **Tempo por treino:** ${userData.timePerDay} minutos
-
-## ESTRUTURA DO TREINO
-**Divisão:** ${userData.daysPerWeek} dias por semana
-**Foco:** ${
-    userData.primaryGoal === "gain-muscle"
-      ? "Hipertrofia muscular"
-      : "Condicionamento geral"
-  }
-
-## TREINO A - PEITO, OMBROS E TRÍCEPS
-1. **Aquecimento (10 min)**
-   - Esteira caminhada: 5 minutos
-   - Alongamento dinâmico: 5 minutos
-
-2. **Exercícios Principais**
-   - Supino reto: 3x8-12
-   - Supino inclinado: 3x8-12
-   - Desenvolvimento: 3x8-12
-   - Elevação lateral: 3x12-15
-   - Tríceps pulley: 3x10-15
-   - Tríceps francês: 3x10-15
-
-3. **Volta à calma (10 min)**
-   - Alongamento estático
-
-## TREINO B - COSTAS E BÍCEPS
-1. **Aquecimento (10 min)**
-   - Elíptico: 5 minutos
-   - Mobilidade: 5 minutos
-
-2. **Exercícios Principais**
-   - Puxada alta: 3x8-12
-   - Remada baixa: 3x8-12
-   - Remada curvada: 3x8-12
-   - Rosca direta: 3x10-15
-   - Rosca martelo: 3x10-15
-
-3. **Volta à calma (10 min)**
-   - Alongamento
-
-## TREINO C - PERNAS E CORE
-1. **Aquecimento (10 min)**
-   - Bike: 5 minutos
-   - Ativação glúteos: 5 minutos
-
-2. **Exercícios Principais**
-   - Agachamento: 3x8-12
-   - Leg press: 3x10-15
-   - Extensora: 3x12-15
-   - Flexora: 3x12-15
-   - Panturrilha: 3x15-20
-   - Prancha: 3x30-60seg
-
-## ORIENTAÇÕES IMPORTANTES
-- Descanso entre séries: 60-90 segundos
-- Progressão: Aumente carga quando conseguir fazer todas as repetições
-- Hidratação: Beba água durante todo o treino
-- Frequência: ${
-    userData.daysPerWeek
-  }x por semana com 1 dia de descanso entre treinos
-
-## DICAS MOTIVACIONAIS
-- Seja consistente, resultados levam tempo
-- Foque na execução correta dos exercícios
-- Celebrate pequenas vitórias
-- Mantenha um diário de treinos
-
-*Plano gerado automaticamente baseado no seu perfil*`;
+// Interface para dados de reabilitação
+export interface RehabilitationData {
+  // Informações básicas
+  painAreas: string[]
+  age: number
+  gender: string
+  
+  // Histórico médico
+  injuryType: string
+  injuryDuration: string
+  painLevel: number
+  medicalTreatment: string
+  medications: string[]
+  surgeryHistory: string
+  
+  // Limitações e atividades
+  dailyActivities: string[]
+  movementLimitations: string[]
+  previousPhysioTherapy: string
+  exerciseExperience: string
+  
+  // Objetivos e estilo de vida
+  rehabGoals: string[]
+  timeAvailability: string
+  homeEnvironment: string
+  workType: string
+  sleepQuality: string
+  stressLevel: string
 }
 
-// Função de fallback para plano nutricional estático
-function generateStaticNutritionPlan(userData: UserProfileData): string {
-  if (!userData.wantsDiet) {
-    return "Usuário optou por não receber plano alimentar.";
-  }
+// Função para gerar plano de reabilitação personalizado
+export async function generateRehabilitationPlan(
+  rehabData: RehabilitationData
+): Promise<string | null> {
+  const prompt = `
+Como um fisioterapeuta experiente e especialista em reabilitação, crie um plano de reabilitação personalizado detalhado para:
 
-  const calorias =
-    userData.primaryGoal === "gain-muscle"
-      ? 2500
-      : userData.primaryGoal === "lose-weight"
-      ? 1800
-      : 2200;
+DADOS DO PACIENTE:
+- Idade: ${rehabData.age} anos
+- Gênero: ${rehabData.gender}
+- Áreas de dor: ${rehabData.painAreas.join(", ")}
+- Tipo de lesão: ${rehabData.injuryType}
+- Duração da lesão: ${rehabData.injuryDuration}
+- Nível de dor (1-10): ${rehabData.painLevel}
+- Tratamento médico atual: ${rehabData.medicalTreatment}
+- Medicamentos: ${rehabData.medications.join(", ") || "Nenhum"}
+- Histórico de cirurgias: ${rehabData.surgeryHistory}
+- Atividades diárias afetadas: ${rehabData.dailyActivities.join(", ")}
+- Limitações de movimento: ${rehabData.movementLimitations.join(", ")}
+- Fisioterapia anterior: ${rehabData.previousPhysioTherapy}
+- Experiência com exercícios: ${rehabData.exerciseExperience}
+- Objetivos de reabilitação: ${rehabData.rehabGoals.join(", ")}
+- Tempo disponível: ${rehabData.timeAvailability}
+- Ambiente domiciliar: ${rehabData.homeEnvironment}
+- Tipo de trabalho: ${rehabData.workType}
+- Qualidade do sono: ${rehabData.sleepQuality}
+- Nível de estresse: ${rehabData.stressLevel}
 
-  return `# PLANO ALIMENTAR PERSONALIZADO
+CRIE UM PLANO ESTRUTURADO COM:
 
-## ANÁLISE NUTRICIONAL
-- **Objetivo:** ${
-    userData.primaryGoal === "gain-muscle" ? "Ganho de massa" : "Manutenção"
-  }
-- **Calorias diárias:** ${calorias} kcal
-- **Refeições:** ${userData.mealsPerDay} por dia
-- **Proteínas:** ${Math.round((calorias * 0.3) / 4)}g
-- **Carboidratos:** ${Math.round((calorias * 0.4) / 4)}g
-- **Gorduras:** ${Math.round((calorias * 0.3) / 9)}g
+1. **AVALIAÇÃO INICIAL**
+   - Análise da condição atual
+   - Identificação dos principais problemas
+   - Fatores que contribuem para a dor
+   - Prognóstico esperado
 
-## CARDÁPIO SEMANAL
+2. **OBJETIVOS DO TRATAMENTO**
+   - Objetivos a curto prazo (2-4 semanas)
+   - Objetivos a médio prazo (1-3 meses)
+   - Objetivos a longo prazo (3-6 meses)
 
-### CAFÉ DA MANHÃ (400 kcal)
-- 2 ovos mexidos
-- 2 fatias de pão integral
-- 1 banana
-- 1 copo de leite desnatado
+3. **PROGRAMA DE EXERCÍCIOS DOMICILIARES**
+   Para cada fase do tratamento, inclua NO MÍNIMO 6-8 EXERCÍCIOS:
+   
+   FASE 1 - ALÍVIO DA DOR E MOBILIDADE INICIAL (Semanas 1-2):
+   - Exercícios de alívio da dor
+   - Mobilização suave
+   - Técnicas de relaxamento
+   - Correção postural básica
+   
+   FASE 2 - FORTALECIMENTO E FLEXIBILIDADE (Semanas 3-6):
+   - Exercícios de fortalecimento progressivo
+   - Alongamentos específicos
+   - Exercícios de estabilização
+   - Melhora da coordenação
+   
+   FASE 3 - CONDICIONAMENTO E PREVENÇÃO (Semanas 7-12):
+   - Exercícios funcionais
+   - Fortalecimento avançado
+   - Exercícios de propriocepção
+   - Retorno às atividades
 
-### LANCHE DA MANHÃ (200 kcal)
-- 1 iogurte grego
-- 1 colher de granola
+   Para cada exercício especifique:
+   - Nome e descrição detalhada
+   - Posição inicial
+   - Execução passo a passo
+   - Repetições e séries
+   - Frequência semanal
+   - Progressão
+   - Precauções e contraindicações
 
-### ALMOÇO (600 kcal)
-- 150g de frango grelhado
-- 1 xícara de arroz integral
-- Salada verde à vontade
-- 1 colher de azeite
+4. **TÉCNICAS DE ALÍVIO DA DOR**
+   - Aplicação de calor/frio
+   - Técnicas de respiração
+   - Automassagem
+   - Posicionamento para alívio
+   - Técnicas de relaxamento
 
-### LANCHE DA TARDE (300 kcal)
-- 1 shake de whey protein
-- 1 banana
-- 1 punhado de castanhas
+5. **EDUCAÇÃO E ORIENTAÇÕES**
+   - Ergonomia no trabalho
+   - Postura correta nas atividades diárias
+   - Modificações no ambiente
+   - Sinais de alerta
+   - Quando procurar ajuda médica
 
-### JANTAR (500 kcal)
-- 150g de peixe assado
-- Legumes refogados
-- 1 batata doce média
+6. **PREVENÇÃO DE RECIDIVAS**
+   - Exercícios de manutenção
+   - Hábitos saudáveis
+   - Estratégias de enfrentamento
+   - Programa de exercícios para a vida
 
-## LISTA DE COMPRAS
-**Proteínas:**
-- Ovos
-- Frango
-- Peixe
-- Whey protein
+IMPORTANTE: 
+- Todos os exercícios devem ser SEGUROS para execução domiciliar
+- Use apenas equipamentos básicos (toalha, parede, cadeira, almofadas)
+- Inclua variações para diferentes níveis de dor
+- Enfatize a progressão gradual e segura
+- Forneça orientações claras sobre intensidade da dor aceitável durante exercícios
 
-**Carboidratos:**
-- Arroz integral
-- Batata doce
-- Pão integral
-- Aveia
+Use linguagem clara, técnica mas acessível. Seja específico nas instruções e cuidadoso com a segurança.
+`;
 
-**Vegetais:**
-- Alface
-- Tomate
-- Cenoura
-- Brócolis
+  console.log("Gerando plano de reabilitação com Gemini...");
+  return await tryGenerateContent(prompt);
+}
 
-**Frutas:**
-- Banana
-- Maçã
+// Interface para dados do programa sedentário
+export interface SedentaryData {
+  age: number;
+  gender: string;
+  motivation: string;
+  primaryGoal: string;
+  currentActivityLevel: string;
+  availableTime: string;
+  preferredActivities: string[];
+}
 
-## ORIENTAÇÕES
-- Beba pelo menos 2L de água por dia
-- Faça as refeições em horários regulares
-- Mastigue bem os alimentos
-- Evite frituras e doces em excesso
+// Função para gerar programa motivacional "Saindo do Sedentarismo"
+export async function generateSedentaryProgram(
+  sedentaryData: SedentaryData
+): Promise<string | null> {
+  const timeMap: { [key: string]: string } = {
+    "15-min": "15 minutos",
+    "30-min": "30 minutos", 
+    "45-min": "45 minutos",
+    "60-min": "60 minutos"
+  };
 
-## SUPLEMENTAÇÃO
-- Whey protein: 1 dose pós-treino
-- Multivitamínico: 1 cápsula pela manhã
+  const motivationMap: { [key: string]: string } = {
+    "saude": "melhorar sua saúde geral",
+    "energia": "ter mais energia no dia a dia",
+    "peso": "perder peso e se sentir melhor",
+    "autoestima": "aumentar sua autoestima",
+    "longevidade": "viver mais e melhor",
+    "familia": "ser exemplo para sua família",
+    "stress": "reduzir o estresse e ansiedade"
+  };
 
-*Plano gerado automaticamente baseado no seu perfil*`;
+  const goalMap: { [key: string]: string } = {
+    "condicionamento": "ganhar condicionamento físico e fôlego",
+    "mobilidade": "melhorar flexibilidade e mobilidade",
+    "habitos": "criar hábitos saudáveis de exercício",
+    "bem-estar": "melhorar bem-estar geral e disposição"
+  };
+
+  const prompt = `
+Como um personal trainer motivacional especialista em sedentarismo, crie um programa INSPIRADOR e PRÁTICO para alguém que quer sair do sedentarismo:
+
+PERFIL DO CLIENTE:
+- Idade: ${sedentaryData.age} anos
+- Gênero: ${sedentaryData.gender}
+- Motivação principal: ${motivationMap[sedentaryData.motivation] || sedentaryData.motivation}
+- Objetivo: ${goalMap[sedentaryData.primaryGoal] || sedentaryData.primaryGoal}
+- Nível atual: ${sedentaryData.currentActivityLevel}
+- Tempo disponível: ${timeMap[sedentaryData.availableTime] || sedentaryData.availableTime} por dia
+- Atividades preferidas: ${sedentaryData.preferredActivities ? sedentaryData.preferredActivities.join(", ") : 'Nenhuma'}
+
+CRIE UM PROGRAMA MOTIVACIONAL COM:
+
+## 🎯 **MENSAGEM MOTIVACIONAL PERSONALIZADA**
+Uma mensagem inspiradora específica para este perfil, destacando:
+- Como vai se sentir melhor
+- Os benefícios que vai conquistar
+- Por que vale a pena começar HOJE
+
+## 📅 **PROGRAMA SEMANAL PROGRESSIVO**
+
+### **SEMANA 1-2: DESPERTAR DO CORPO**
+- Exercícios suaves para reativar o corpo
+- Caminhadas curtas e alongamentos básicos
+- Foco em criar o hábito (consistência > intensidade)
+
+### **SEMANA 3-4: GANHANDO RITMO** 
+- Aumentar gradualmente intensidade
+- Incluir exercícios de peso corporal básicos
+- Estabelecer rotina sólida
+
+### **SEMANA 5-8: CONSTRUINDO FORÇA**
+- Exercícios mais desafiadores
+- Combinar cardio + fortalecimento
+- Sentir os primeiros resultados
+
+### **SEMANA 9-12: NOVO ESTILO DE VIDA**
+- Programa completo e variado
+- Exercícios funcionais
+- Manutenção dos hábitos conquistados
+
+Para cada semana, inclua:
+- **EXERCÍCIOS ESPECÍFICOS** (nome, descrição, tempo/repetições)
+- **DICAS MOTIVACIONAIS** semanais
+- **MARCOS DE PROGRESSO** para celebrar
+
+## 🏃‍♂️ **EXERCÍCIOS DETALHADOS**
+Liste NO MÍNIMO 20 EXERCÍCIOS variados:
+- Caminhadas (diferentes intensidades)
+- Alongamentos e mobilidade
+- Exercícios de peso corporal (flexões adaptadas, agachamentos, etc.)
+- Exercícios funcionais para o dia a dia
+- Atividades lúdicas e prazerosas
+
+Para cada exercício:
+- Nome motivador
+- Execução simples e clara  
+- Adaptações para iniciantes
+- Benefícios específicos
+- Como progredir
+
+## ⚡ **DICAS DE OURO**
+- Como manter a motivação
+- Estratégias para dias difíceis
+- Como celebrar pequenas vitórias
+- Sinais de progresso para observar
+
+## 🎉 **MENSAGENS DE ENCORAJAMENTO**
+Frases motivacionais para diferentes momentos:
+- Para começar o exercício
+- Quando estiver desanimado
+- Para celebrar conquistas
+- Para manter consistência
+
+IMPORTANTE:
+- Use linguagem MOTIVACIONAL e POSITIVA
+- Foque nos benefícios e na transformação
+- Seja prático e realista
+- Adapte tudo para o tempo disponível (${timeMap[sedentaryData.availableTime] || sedentaryData.availableTime})
+- Torne tudo SIMPLES e PRAZEROSO
+- Não mencione academia - apenas exercícios em casa e ao ar livre
+
+Transforme este programa em uma JORNADA DE CONQUISTA PESSOAL! 🚀
+`;
+
+  console.log("Gerando programa motivacional Saindo do Sedentarismo...");
+  return await tryGenerateContent(prompt);
 }
 
 export default genAI;

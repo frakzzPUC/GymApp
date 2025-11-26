@@ -1,9 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import SedentaryProfile from "@/models/SedentaryProfile"
+import AIPlans from "@/models/AIPlans"
 import User from "@/models/User"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
+import { generateSedentaryProgram } from "@/lib/gemini"
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,10 +19,10 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id
     const body = await req.json()
-    const { gender, weight, height, daysPerWeek, timePerDay } = body
+    const { age, gender, motivation, primaryGoal, currentActivityLevel, availableTime, preferredActivities } = body
 
     // Validação básica
-    if (!gender || !weight || !height || !daysPerWeek || !timePerDay) {
+    if (!age || !gender || !motivation || !primaryGoal || !currentActivityLevel || !availableTime || !preferredActivities) {
       return NextResponse.json({ success: false, message: "Todos os campos são obrigatórios" }, { status: 400 })
     }
 
@@ -35,11 +37,13 @@ export async function POST(req: NextRequest) {
     if (profile) {
       console.log("Atualizando perfil existente")
       // Atualizar perfil existente
+      profile.age = age
       profile.gender = gender
-      profile.weight = weight
-      profile.height = height
-      profile.daysPerWeek = daysPerWeek
-      profile.timePerDay = timePerDay
+      profile.motivation = motivation
+      profile.primaryGoal = primaryGoal
+      profile.currentActivityLevel = currentActivityLevel
+      profile.availableTime = availableTime
+      profile.preferredActivities = preferredActivities
       profile.updatedAt = new Date()
       await profile.save()
     } else {
@@ -47,45 +51,56 @@ export async function POST(req: NextRequest) {
       // Criar novo perfil
       profile = await SedentaryProfile.create({
         userId,
+        age,
         gender,
-        weight,
-        height,
-        daysPerWeek,
-        timePerDay,
-        // Adicionar atividades padrão
-        activities: [
-          {
-            name: "Caminhada Leve",
-            description: "Caminhada em ritmo moderado para iniciantes",
-            duration: "20 minutos",
-            completed: false,
-            date: new Date(),
-          },
-          {
-            name: "Alongamento Básico",
-            description: "Série de alongamentos para melhorar a flexibilidade",
-            duration: "15 minutos",
-            completed: false,
-            date: new Date(),
-          },
-        ],
-        // Inicializar progresso
-        progress: {
-          stepsGoal: 5000,
-          stepsToday: 0,
-          weeklyActivity: 0,
-          weeklyGoal: daysPerWeek,
-          heartRate: {
-            resting: 78,
-            initial: 78,
-          },
-        },
+        motivation,
+        primaryGoal,
+        currentActivityLevel,
+        availableTime,
+        preferredActivities,
       })
     }
 
     console.log("Perfil salvo com sucesso:", profile._id)
 
-    return NextResponse.json({ success: true, data: profile }, { status: 201 })
+    // Gerar programa motivacional com IA
+    console.log("Gerando programa motivacional com IA...")
+    const aiProgram = await generateSedentaryProgram({
+      age,
+      gender,
+      motivation,
+      primaryGoal,
+      currentActivityLevel,
+      availableTime,
+      preferredActivities,
+    })
+
+    // Salvar o programa gerado no AIPlans
+    let aiPlan = await AIPlans.findOne({ userId, planType: "sedentary" })
+    
+    if (aiPlan) {
+      console.log("Atualizando plano existente")
+      aiPlan.planContent = aiProgram || ''
+      aiPlan.updatedAt = new Date()
+      await aiPlan.save()
+    } else {
+      console.log("Criando novo plano")
+      aiPlan = await AIPlans.create({
+        userId,
+        planType: "sedentary",
+        planContent: aiProgram,
+      })
+    }
+
+    console.log("Programa motivacional gerado e salvo com sucesso")
+
+    return NextResponse.json({ 
+      success: true, 
+      data: { 
+        profile,
+        aiProgram 
+      } 
+    }, { status: 201 })
   } catch (error) {
     console.error("Erro ao salvar perfil sedentário:", error)
     return NextResponse.json({ success: false, message: "Erro ao salvar perfil sedentário" }, { status: 500 })
@@ -111,7 +126,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Perfil sedentário não encontrado" }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, data: profile }, { status: 200 })
+    // Buscar também o plano da IA
+    const aiPlan = await AIPlans.findOne({ userId, planType: "sedentary" })
+
+    return NextResponse.json({ 
+      success: true, 
+      data: { 
+        profile,
+        aiProgram: aiPlan?.planContent || null
+      } 
+    }, { status: 200 })
   } catch (error) {
     console.error("Erro ao buscar perfil sedentário:", error)
     return NextResponse.json({ success: false, message: "Erro ao buscar perfil sedentário" }, { status: 500 })

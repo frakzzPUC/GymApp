@@ -1,10 +1,13 @@
-import React from "react"
-import { CheckCircle, Clock, Plus } from "lucide-react"
+import React, { useEffect, useState } from "react"
+import { CheckCircle, Clock, Plus, FileText, X } from "lucide-react"
 import { Button } from "@/components/ui/actions/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/data-display/card"
 import { Badge } from "@/components/ui/feedback/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/overlay/dialog"
 import { UserProfile } from "@/hooks/useDashboard"
 import { RehabilitationStats } from "./RehabilitationStats"
+import { TodayRehabExercises } from "../rehabilitation/TodayRehabExercises"
+import { RehabilitationPlanRenderer } from "./RehabilitationPlanRenderer"
 import { 
   hasCompletedWorkout, 
   hasMissedWorkout, 
@@ -18,6 +21,41 @@ interface RehabilitationDashboardProps {
 }
 
 export function RehabilitationDashboard({ userProfile, onMarkComplete }: RehabilitationDashboardProps) {
+  const [completedExercises, setCompletedExercises] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Usar o rehabilitationPlan do userProfile diretamente
+  const rehabilitationPlan = userProfile.rehabilitationPlan || ""
+
+  // Carregar exercícios completados do localStorage quando o componente inicializa
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const storageKey = `rehab-completed-${today}`
+    const completed = JSON.parse(localStorage.getItem(storageKey) || '[]')
+    setCompletedExercises(completed)
+  }, [])
+
+  const handleMarkComplete = async (exerciseId: string) => {
+    try {
+      // Adicionar à lista local imediatamente para feedback visual
+      setCompletedExercises(prev => [...prev, exerciseId])
+      
+      // Para reabilitação, apenas salvar localmente no localStorage
+      const today = new Date().toISOString().split('T')[0]
+      const storageKey = `rehab-completed-${today}`
+      const existingCompleted = JSON.parse(localStorage.getItem(storageKey) || '[]')
+      const updatedCompleted = [...existingCompleted, exerciseId]
+      localStorage.setItem(storageKey, JSON.stringify(updatedCompleted))
+      
+      console.log(`Exercício ${exerciseId} marcado como concluído`)
+      
+    } catch (error) {
+      console.error("Erro ao marcar exercício como completo:", error)
+      // Reverter mudança local em caso de erro
+      setCompletedExercises(prev => prev.filter(id => id !== exerciseId))
+    }
+  }
   const todaysActivities = getTodaysActivities(userProfile)
   const today = new Date()
   const hasCompletedToday = hasCompletedWorkout(today, userProfile)
@@ -35,15 +73,38 @@ export function RehabilitationDashboard({ userProfile, onMarkComplete }: Rehabil
             Acompanhe seu progresso e exercícios de reabilitação
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">
-            {today.toLocaleDateString('pt-BR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">
+              {today.toLocaleDateString('pt-BR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
+          {rehabilitationPlan && (
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Ver Plano Completo
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <div className="flex items-center justify-between">
+                    <DialogTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Plano de Reabilitação Completo
+                    </DialogTitle>
+                  </div>
+                </DialogHeader>
+                <RehabilitationPlanRenderer rehabilitationText={rehabilitationPlan} />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
@@ -52,72 +113,45 @@ export function RehabilitationDashboard({ userProfile, onMarkComplete }: Rehabil
 
       {/* Grid de conteúdo principal */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Exercícios de Hoje */}
+        {/* Exercícios de Hoje - Usando IA */}
+        <TodayRehabExercises 
+          rehabilitationPlan={rehabilitationPlan}
+          onMarkComplete={handleMarkComplete}
+          completedExercises={completedExercises}
+        />
+
+        {/* Progresso Semanal ou outras métricas */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Exercícios de Hoje
+              <CheckCircle className="h-5 w-5" />
+              Progresso da Semana
             </CardTitle>
             <CardDescription>
-              {shouldTrainOnDay(today, userProfile.daysPerWeek) 
-                ? "Seus exercícios programados para hoje"
-                : "Hoje é dia de descanso"
-              }
+              Acompanhe sua consistência nos exercícios
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {shouldTrainOnDay(today, userProfile.daysPerWeek) ? (
-              <div className="space-y-4">
-                {todaysActivities.length > 0 ? (
-                  todaysActivities.map((exercise) => (
-                    <div key={exercise._id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium">{exercise.name}</h4>
-                        <p className="text-sm text-muted-foreground">{exercise.description}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">{exercise.duration}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {exercise.completed ? (
-                          <Badge variant="secondary" className="text-green-700 bg-green-100">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Concluído
-                          </Badge>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => onMarkComplete(exercise._id)}
-                            className="text-xs"
-                          >
-                            Marcar como concluído
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-6">
-                    <Plus className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-muted-foreground">Nenhum exercício programado para hoje</p>
+            <div className="space-y-4">
+              {isLoading ? (
+                <div className="text-center py-6">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+                  <p className="text-muted-foreground mt-2">Carregando...</p>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <div className="text-2xl font-bold text-emerald-600 mb-2">
+                    {completedExercises.length}
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <CheckCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Hoje é seu dia de descanso!</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Aproveite para relaxar e permitir que seu corpo se recupere.
-                </p>
-              </div>
-            )}
+                  <p className="text-muted-foreground">Exercícios completados hoje</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Continue assim para acelerar sua recuperação!
+                  </p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
-
-
       </div>
     </div>
   )

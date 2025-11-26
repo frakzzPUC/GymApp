@@ -75,8 +75,14 @@ export const parseWorkoutPlan = (workoutPlan: string): WorkoutDay => {
           inTargetSection = (currentSection === todayWorkoutLetter)
           
           if (inTargetSection) {
-            // Extrair o foco do treino do título
-            sectionTitle = line.replace(/##\s*TREINO\s*[A-Z]\s*-?\s*/i, '').trim()
+            // Extrair o foco do treino do título e limpar formatação
+            sectionTitle = line
+              .replace(/##\s*TREINO\s*[A-Z]\s*-?\s*/i, '')
+              .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém texto
+              .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
+              .replace(/\*\*/g, '') // Remove qualquer ** restante
+              .trim()
+            
             focus = sectionTitle || getDefaultFocusForToday(today)
             console.log('Found target section:', currentSection, 'Focus:', focus)
           }
@@ -107,18 +113,27 @@ export const parseWorkoutPlan = (workoutPlan: string): WorkoutDay => {
         if (line.match(/^\s*-\s*.+:\s*\d+x\d+/)) {
           const exerciseMatch = line.match(/^\s*-\s*(.+?):\s*(\d+)x(\d+(?:-\d+)?)/i)
           if (exerciseMatch) {
-            const name = exerciseMatch[1].trim()
+            // Limpar nome do exercício removendo formatação markdown
+            let name = exerciseMatch[1].trim()
+              .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém texto
+              .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim  
+              .replace(/\*\*/g, '') // Remove qualquer ** restante
+              .replace(/^[-•*]\s*/, '') // Remove marcadores de lista
+              .trim()
+            
             const sets = exerciseMatch[2]
             const reps = exerciseMatch[3]
             
-            exercises.push({
-              name: name,
-              sets: sets,
-              reps: reps,
-              rest: '60-90s',
-              notes: ''
-            })
-            console.log('Added exercise:', name, sets + 'x' + reps)
+            if (name.length > 2) {
+              exercises.push({
+                name: name,
+                sets: sets,
+                reps: reps,
+                rest: '60-90s',
+                notes: ''
+              })
+              console.log('Added exercise:', name, sets + 'x' + reps)
+            }
           }
         }
         
@@ -130,7 +145,15 @@ export const parseWorkoutPlan = (workoutPlan: string): WorkoutDay => {
         else if (line.match(/.*:\s*\d+x\d+/i)) {
           const exerciseMatch = line.match(/(.+?):\s*(\d+)x(\d+(?:-\d+)?)/i)
           if (exerciseMatch) {
-            const name = exerciseMatch[1].trim().replace(/^\d+\.\s*\*\*?|\*\*?$/g, '')
+            // Limpeza mais robusta do nome do exercício
+            let name = exerciseMatch[1].trim()
+              .replace(/^\d+\.\s*/, '') // Remove numeração
+              .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém texto
+              .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
+              .replace(/\*\*/g, '') // Remove qualquer ** restante
+              .replace(/^[-•*]\s*/, '') // Remove marcadores de lista
+              .trim()
+            
             const sets = exerciseMatch[2]
             const reps = exerciseMatch[3]
             

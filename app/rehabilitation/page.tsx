@@ -1,31 +1,35 @@
-"use client"
+"use client";
 
-import React, { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { Loader2 } from "lucide-react"
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Loader2 } from "lucide-react";
 
 // Hooks
-import { useRehabilitationForm } from "@/hooks/useRehabilitationForm"
-import { useAuthRedirect } from "@/hooks/useAuthRedirect"
+import { useRehabilitationForm } from "@/hooks/useRehabilitationForm";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
 // Components
-import { AppHeader } from "@/components/sedentary/AppHeader"
-import { PainSelectionCard } from "@/components/rehabilitation/PainSelectionCard"
+import { AppHeader } from "@/components/sedentary/AppHeader";
+import { RehabilitationForm } from "@/components/rehabilitation/RehabilitationForm";
 
 export default function RehabilitationPage() {
-  const router = useRouter()
-  const { data: session, status } = useSession()
-  const isPageLoading = useAuthRedirect()
-  
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const isPageLoading = useAuthRedirect();
+
   const {
-    selectedPains,
+    formData,
+    currentStep,
     error,
     isLoading,
-    handlePainToggle,
+    updateFormData,
+    handleArrayToggle,
+    nextStep,
+    prevStep,
     submitForm,
-    setError
-  } = useRehabilitationForm()
+    setError,
+  } = useRehabilitationForm();
 
   useEffect(() => {
     // Verificar se o usuário está autenticado
@@ -33,23 +37,23 @@ export default function RehabilitationPage() {
       // Verificar se o usuário já tem um programa de reabilitação
       if (session?.user?.program === "rehabilitation") {
         // Se já tem, redirecionar para o dashboard
-        router.push("/dashboard")
+        router.push("/dashboard");
       }
     } else if (status === "unauthenticated") {
       // Se não estiver autenticado, redirecionar para o login
-      router.push("/login")
+      router.push("/login");
     }
-  }, [status, session, router])
+  }, [status, session, router]);
 
   const handleSubmit = async () => {
-    const result = await submitForm()
-    
+    const result = await submitForm();
+
     if (result.success) {
-      console.log("Redirecionando para o dashboard")
-      router.push("/dashboard")
+      console.log("Redirecionando para o dashboard");
+      router.push("/dashboard");
     }
     // Erros já são tratados dentro do hook
-  }
+  };
 
   if (status === "loading" || isPageLoading) {
     return (
@@ -60,24 +64,32 @@ export default function RehabilitationPage() {
           <p className="text-muted-foreground mt-2">Aguarde um momento</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex min-h-screen flex-col">
       <AppHeader />
-      
+
       <main className="flex-1 p-4 md:p-8">
-        <div className="mx-auto max-w-2xl">
-          <PainSelectionCard
-            selectedPains={selectedPains}
+        <div className="mx-auto max-w-4xl">
+          <RehabilitationForm
+            formData={formData}
+            currentStep={currentStep}
             error={error}
             isLoading={isLoading}
-            onPainToggle={handlePainToggle}
-            onSubmit={handleSubmit}
+            updateFormData={
+              updateFormData as (field: string, value: any) => void
+            }
+            handleArrayToggle={
+              handleArrayToggle as (field: string, itemId: string) => void
+            }
+            nextStep={nextStep}
+            prevStep={prevStep}
+            submitForm={handleSubmit}
           />
         </div>
       </main>
     </div>
-  )
+  );
 }
