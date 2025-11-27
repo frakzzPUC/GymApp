@@ -278,19 +278,33 @@ CRIE UM PLANO ESTRUTURADO COM:
    - Necessidades hídricas
 
 2. **CARDÁPIO SEMANAL DETALHADO** (7 dias)
-   Para cada dia inclua:
-   - Café da manhã
-   - Lanche da manhã (se aplicável)
-   - Almoço
-   - Lanche da tarde (se aplicável)
-   - Jantar
-   - Ceia (se aplicável)
-
-   Para cada refeição especifique:
-   - Ingredientes com quantidades
-   - Modo de preparo simples
-   - Valor calórico aproximado
-   - Substituições possíveis
+   
+   FORMATO OBRIGATÓRIO para cada refeição:
+   
+   ## DIA 1
+   
+   ### Café da manhã (400 kcal)
+   - 2 fatias de pão integral (120g)
+   - 1 ovo mexido (60g)
+   - 1 copo de leite desnatado (200ml)
+   - 1 banana média (100g)
+   
+   **Modo de preparo**: Mexer o ovo na frigideira com pouco óleo.
+   **Substitutos**: Pão integral pode ser trocado por tapioca.
+   
+   ### Lanche da manhã (150 kcal)
+   - 1 iogurte natural (150g)
+   - 1 colher de sopa de granola (15g)
+   
+   ### Almoço (500 kcal)
+   - 150g de peito de frango grelhado
+   - 4 colheres de arroz integral (80g)
+   - 2 colheres de feijão (60g)
+   - Salada verde à vontade
+   
+   **Modo de preparo**: Temperar o frango com ervas e grelhar.
+   
+   [Continue assim para TODOS os 7 dias, TODAS as refeições]
 
 3. **LISTA DE COMPRAS ORGANIZADA**
    - Proteínas

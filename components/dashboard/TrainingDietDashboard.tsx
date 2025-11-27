@@ -97,8 +97,12 @@ export function TrainingDietDashboard({
         // O plano nutricional está no próprio userProfile como aiNutritionPlan
         if (userProfile.aiNutritionPlan) {
           console.log(
-            "Plano nutricional encontrado no perfil:",
-            userProfile.aiNutritionPlan
+            "=== DEBUG PLANO NUTRICIONAL ===",
+            "\nTamanho do plano:", userProfile.aiNutritionPlan.length,
+            "\nPrimeiros 500 caracteres:", userProfile.aiNutritionPlan.substring(0, 500),
+            "\nContém 'Café da manhã':", userProfile.aiNutritionPlan.includes("Café da manhã"),
+            "\nContém 'kcal':", userProfile.aiNutritionPlan.includes("kcal"),
+            "\nContém 'CARDÁPIO':", userProfile.aiNutritionPlan.includes("CARDÁPIO")
           );
           setNutritionPlan(userProfile.aiNutritionPlan);
 

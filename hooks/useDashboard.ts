@@ -217,6 +217,22 @@ export function useDashboard() {
           }
         }
         
+        // Para training-diet, também buscar planos AI se não tiver aiNutritionPlan
+        if (currentProgramType === "training-diet" && !profileData.aiNutritionPlan) {
+          try {
+            const aiPlansResponse = await fetch("/api/ai-plans")
+            if (aiPlansResponse.ok) {
+              const aiPlansData = await aiPlansResponse.json()
+              if (aiPlansData.success && aiPlansData.data?.latest?.nutritionPlan) {
+                profileData.aiNutritionPlan = aiPlansData.data.latest.nutritionPlan
+                console.log("Plano nutricional recuperado dos AI Plans:", aiPlansData.data.latest.nutritionPlan.substring(0, 100) + "...")
+              }
+            }
+          } catch (aiError) {
+            console.log("Erro ao buscar planos AI para training-diet:", aiError)
+          }
+        }
+        
         setUserProfile(profileData)
         if (!programType) {
           setProgramType(currentProgramType)

@@ -31,7 +31,14 @@ const SedentaryPlanRenderer: React.FC<SedentaryPlanRendererProps> = ({ content }
       if (lines.length === 0) return null
 
       let title = lines[0].replace(/^#+\s*/, '').trim()
-      const content = lines.slice(1).join('\n')
+      let content = lines.slice(1).join('\n')
+      
+      // Limpar asteriscos e formatação dos títulos
+      title = title.replace(/\*{1,}/g, '').trim()
+      title = title.replace(/^\*+\s*/, '').replace(/\s*\*+$/, '')
+      
+      // Pré-processamento do conteúdo: remover asteriscos em excesso
+      content = content.replace(/\*{3,}/g, '') // Remove 3 ou mais asteriscos consecutivos
       
       // Limpar títulos de mensagens motivacionais
       if (title.toLowerCase().includes('mensagem motivacional')) {
@@ -83,10 +90,16 @@ const SedentaryPlanRenderer: React.FC<SedentaryPlanRendererProps> = ({ content }
   const formatSectionContent = (content: string, type: string) => {
     let formattedContent = content
 
-    // Remover asteriscos e formatação markdown excessiva
+    // Remover asteriscos e formatação markdown excessiva - melhorado
     formattedContent = formattedContent.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 font-semibold">$1</strong>')
     formattedContent = formattedContent.replace(/\*(.*?)\*/g, '<em class="text-gray-700">$1</em>')
-    formattedContent = formattedContent.replace(/\*+/g, '')
+    
+    // Remover asteriscos isolados e múltiplos
+    formattedContent = formattedContent.replace(/\*{1,}/g, '')
+    
+    // Remover asteriscos no início ou fim de linhas
+    formattedContent = formattedContent.replace(/^\*+\s*/gm, '')
+    formattedContent = formattedContent.replace(/\s*\*+$/gm, '')
 
     // Limpar títulos de seção para mensagens motivacionais
     if (type === 'motivation') {
@@ -131,6 +144,12 @@ const SedentaryPlanRenderer: React.FC<SedentaryPlanRendererProps> = ({ content }
     
     // Remover múltiplas quebras de linha consecutivas
     formattedContent = formattedContent.replace(/(<br>\s*){3,}/g, '<div class="my-3"></div>')
+    
+    // Limpeza final: remover qualquer asterisco restante que possa ter sobrado
+    formattedContent = formattedContent.replace(/\*/g, '')
+    
+    // Limpar espaços extras que podem ter ficado após remover asteriscos
+    formattedContent = formattedContent.replace(/\s{2,}/g, ' ')
 
     return formattedContent
   }

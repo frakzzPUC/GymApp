@@ -145,9 +145,9 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
     switch(type) {
       case 'analysis': return <Target className="h-4 w-4 text-blue-600" />
       case 'structure': return <Calendar className="h-4 w-4 text-purple-600" />
-      case 'workout': return <Dumbbell className="h-4 w-4 text-green-600" />
-      case 'guidance': return <Trophy className="h-4 w-4 text-orange-600" />
-      case 'motivation': return <Activity className="h-4 w-4 text-red-600" />
+      case 'workout': return <Dumbbell className="h-4 w-4 text-gray-600" />
+      case 'guidance': return <Trophy className="h-4 w-4 text-gray-600" />
+      case 'motivation': return <Activity className="h-4 w-4 text-gray-600" />
       case 'topic': return <Target className="h-5 w-5 text-indigo-600" />
       case 'day': return <Dumbbell className="h-5 w-5 text-emerald-600" />
       default: return <Target className="h-4 w-4 text-gray-600" />
@@ -156,13 +156,13 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
 
   const getSectionColor = (type: string) => {
     switch(type) {
-      case 'analysis': return 'border-l-blue-500 bg-blue-50'
-      case 'structure': return 'border-l-purple-500 bg-purple-50'
-      case 'workout': return 'border-l-green-500 bg-green-50'
-      case 'guidance': return 'border-l-orange-500 bg-orange-50'
-      case 'motivation': return 'border-l-red-500 bg-red-50'
-      case 'topic': return 'border-l-indigo-500 bg-gradient-to-r from-indigo-50 to-blue-50'
-      case 'day': return 'border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-green-50'
+      case 'analysis': return 'border-l-gray-500 bg-gray-50'
+      case 'structure': return 'border-l-gray-500 bg-gray-50'
+      case 'workout': return 'border-l-gray-500 bg-gray-50'
+      case 'guidance': return 'border-l-gray-500 bg-gray-50'
+      case 'motivation': return 'border-l-gray-500 bg-gray-50'
+      case 'topic': return 'border-l-gray-500 bg-gray-50'
+      case 'day': return 'border-l-gray-500 bg-gray-50'
       default: return 'border-l-gray-500 bg-gray-50'
     }
   }
@@ -170,7 +170,7 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
   return (
     <div className="space-y-6">
       {/* Header com resumo */}
-      <Card className="bg-gradient-to-r from-blue-500/10 to-green-500/10">
+      <Card className="bg-gray-50">
         <CardContent className="pt-6">
           <div className="text-center">
             <h3 className="text-lg font-semibold mb-2">Seu Plano de Treino Personalizado</h3>
@@ -188,14 +188,14 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
         return (
           <Card key={sectionIndex} className={`border-l-4 ${getSectionColor(section.type)} ${isTopicSection ? 'shadow-lg' : isDaySection ? 'shadow-md border-2' : ''}`}>
             <CardHeader className="pb-3">
-              <CardTitle className={`${isTopicSection ? 'text-xl' : isDaySection ? 'text-lg' : 'text-lg'} flex items-center gap-3`}>
+              <CardTitle className={`${isTopicSection ? 'text-xl' : isDaySection ? 'text-xl' : 'text-lg'} flex items-center gap-3`}>
                 {section.number && (
-                  <span className={`${isTopicSection ? 'bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-bold' : isDaySection ? 'bg-emerald-600 text-white px-2 py-1 rounded text-sm font-semibold' : 'bg-gray-600 text-white px-2 py-1 rounded text-xs'}`}>
+                  <span className="bg-gray-600 text-white px-2 py-1 rounded text-xs">
                     {section.number}
                   </span>
                 )}
                 {getSectionIcon(section.type)}
-                <span className={isTopicSection ? 'font-bold' : isDaySection ? 'font-semibold' : 'font-medium'}>
+                <span className={isTopicSection ? 'font-bold' : isDaySection ? 'font-bold text-gray-900 text-xl mb-1' : 'font-medium'}>
                   {section.title
                     .replace(/\*\*(.*?)\*\*/g, '$1') // Remove **texto** mas mantém texto
                     .replace(/^\*\*|\*\*$/g, '') // Remove ** no início/fim
@@ -211,7 +211,7 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
             </CardHeader>
           <CardContent>
             {section.type === 'analysis' ? (
-              <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border border-blue-200">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="space-y-3">
                   {section.content.map((item, itemIndex) => {
                     const cleanItem = item
@@ -235,10 +235,10 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                       }
                       
                       return (
-                        <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-3 py-2 border-b border-blue-100 last:border-b-0">
+                        <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-3 py-2 border-b border-gray-100 last:border-b-0">
                           <span className="font-semibold text-sm text-blue-900">{cleanLabel}</span>
                           <div className="md:col-span-2">
-                            <span className="inline-flex px-3 py-1 rounded-full text-sm bg-white border border-blue-200 text-blue-800">
+                            <span className="inline-flex px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-800">
                               {cleanValue}
                             </span>
                           </div>
@@ -255,7 +255,7 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                 </div>
               </div>
             ) : section.type === 'structure' ? (
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-200">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="space-y-3">
                   {section.content.map((item, itemIndex) => {
                     const cleanItem = item
@@ -283,10 +283,10 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                       }
                       
                       return (
-                        <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-3 py-2 border-b border-purple-100 last:border-b-0">
-                          <span className="font-semibold text-sm text-purple-900">{cleanLabel}</span>
+                        <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-3 py-2 border-b border-gray-100 last:border-b-0">
+                          <span className="font-semibold text-sm text-gray-900">{cleanLabel}</span>
                           <div className="md:col-span-2">
-                            <span className="inline-flex px-3 py-1 rounded-full text-sm bg-white border border-purple-200 text-purple-800">
+                            <span className="inline-flex px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-800">
                               {cleanValue}
                             </span>
                           </div>
@@ -297,8 +297,8 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                     // Se for uma lista estruturada (Semana 1:, Segunda:, etc.)
                     if (cleanItem.match(/^(Semana|Segunda|Terça|Quarta|Quinta|Sexta|Sábado|Domingo)/i)) {
                       return (
-                        <div key={itemIndex} className="bg-white p-3 rounded-lg border border-purple-200">
-                          <span className="font-medium text-purple-900 text-sm">
+                        <div key={itemIndex} className="bg-white p-3 rounded-lg border border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm">
                             {cleanItem}
                           </span>
                         </div>
@@ -306,7 +306,7 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                     }
                     
                     return (
-                      <p key={itemIndex} className="text-sm text-purple-900 leading-relaxed">
+                      <p key={itemIndex} className="text-sm text-gray-900 leading-relaxed">
                         {cleanItem}
                       </p>
                     )
@@ -314,7 +314,7 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                 </div>
               </div>
             ) : (section.type === 'day' || isDaySection) ? (
-              <div className="bg-gradient-to-r from-emerald-50 to-green-50 p-5 rounded-xl border-2 border-emerald-200">
+              <div className="bg-gray-50 p-5 rounded-xl border-2 border-gray-200">
                 <div className="space-y-4">
                   {section.content.map((item, itemIndex) => {
                     const cleanItem = item
@@ -339,19 +339,19 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                       
                       if (text.toLowerCase().includes('aquecimento')) {
                         icon = <Activity className="h-4 w-4" />
-                        bgColor = "bg-orange-100"
-                        textColor = "text-orange-800"
-                        borderColor = "border-orange-300"
+                        bgColor = "bg-gray-100"
+                        textColor = "text-gray-800"
+                        borderColor = "border-gray-300"
                       } else if (text.toLowerCase().includes('exercícios')) {
                         icon = <Dumbbell className="h-4 w-4" />
                         bgColor = "bg-blue-100"
                         textColor = "text-blue-800"
-                        borderColor = "border-blue-300"
+                        borderColor = "border-gray-300"
                       } else if (text.toLowerCase().includes('volta') || text.toLowerCase().includes('calma')) {
                         icon = <Target className="h-4 w-4" />
                         bgColor = "bg-purple-100"
                         textColor = "text-purple-800"
-                        borderColor = "border-purple-300"
+                        borderColor = "border-gray-300"
                       }
                       
                       return (
@@ -395,50 +395,90 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                       )
                     }
                     
-                    // Informações com séries e repetições (3 x 8-12, etc.)
-                    if (cleanItem.match(/\d+\s*x\s*\d+(-\d+)?/)) {
+                    // Exercícios numerados (1. Nome do Exercício) - DESTAQUE PRINCIPAL
+                    if (cleanItem.match(/^\d+\.\s+[A-Z]/)) {
+                      const exerciseName = cleanItem.replace(/^\d+\.\s*/, '').replace(/\*\*/g, '')
+                      const exerciseNumber = cleanItem.match(/^\d+/)?.[0] || ''
+                      
+                      // Evitar renderizar seções como "1. Cardio Leve:" se já for uma seção
+                      if (!cleanItem.toLowerCase().includes('aquecimento') && 
+                          !cleanItem.toLowerCase().includes('volta') && 
+                          !cleanItem.toLowerCase().includes('exercícios')) {
+                        return (
+                          <div key={itemIndex} className="bg-white p-5 rounded-xl border-2 border-blue-300 shadow-lg mb-4">
+                            <div className="flex items-center gap-4">
+                              <span className="bg-blue-600 text-white px-4 py-2 rounded-full font-bold text-xl min-w-[50px] text-center">
+                                {exerciseNumber}
+                              </span>
+                              <div className="flex-1">
+                                <h4 className="font-bold text-gray-900 text-xl mb-1">
+                                  {exerciseName}
+                                </h4>
+                              </div>
+                              <Dumbbell className="h-6 w-6 text-blue-600" />
+                            </div>
+                          </div>
+                        )
+                      }
+                    }
+                    
+                    // Informações com séries e repetições (3 x 8-12, etc.) - DESTAQUE SECUNDÁRIO
+                    if (cleanItem.match(/\d+\s*x\s*\d+(-\d+)?/) && !cleanItem.toLowerCase().includes('séries x repetições')) {
                       return (
-                        <div key={itemIndex} className="flex items-center justify-between bg-emerald-100 p-3 rounded-lg ml-4 border border-emerald-200">
-                          <span className="text-sm font-medium text-emerald-800">Séries x Repetições:</span>
-                          <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 font-bold">
+                        <div key={itemIndex} className="flex items-center justify-between bg-green-50 p-4 rounded-lg ml-6 border-2 border-green-200 shadow-sm">
+                          <span className="text-base font-bold text-green-800">📊 Séries x Repetições:</span>
+                          <Badge className="bg-green-600 text-white hover:bg-green-600 font-bold text-base px-4 py-2">
                             {cleanItem}
                           </Badge>
                         </div>
                       )
                     }
                     
-                    // Dicas de execução (texto que começa com ações)
+                    // Séries x Repetições: formato específico
+                    if (cleanItem.match(/Séries\s*x\s*Repetições:/i)) {
+                      const seriesInfo = cleanItem.replace(/Séries\s*x\s*Repetições:\s*/i, '')
+                      return (
+                        <div key={itemIndex} className="flex items-center justify-between bg-green-50 p-4 rounded-lg ml-6 border-2 border-green-200 shadow-sm">
+                          <span className="text-base font-bold text-green-800">📊 Séries x Repetições:</span>
+                          <Badge className="bg-green-600 text-white hover:bg-green-600 font-bold text-base px-4 py-2">
+                            {seriesInfo}
+                          </Badge>
+                        </div>
+                      )
+                    }
+                    
+                    // Dicas de execução (texto que começa com ações) - MENOS DESTAQUE
                     if (cleanItem.toLowerCase().includes('dica') || 
                         cleanItem.match(/^(Mantenha|Incline|Puxe|Empurre|Segure|Controle|Desça|Suba)/i)) {
                       return (
-                        <div key={itemIndex} className="bg-blue-50 p-3 rounded-lg ml-4 border-l-4 border-blue-400">
+                        <div key={itemIndex} className="bg-gray-100 p-2 rounded ml-8 border-l-2 border-gray-300 opacity-75">
                           <div className="flex items-start gap-2">
-                            <span className="text-blue-600 mt-0.5 text-sm">💡</span>
-                            <span className="text-sm text-blue-800 leading-relaxed font-medium">
-                              <strong>Dica:</strong> {cleanItem}
+                            <span className="text-gray-500 mt-0.5 text-xs">💡</span>
+                            <span className="text-xs text-gray-600 leading-relaxed">
+                              {cleanItem.replace(/^dica:\s*/i, '').replace(/^\*\*dica\*\*:\s*/i, '')}
                             </span>
                           </div>
                         </div>
                       )
                     }
                     
-                    // Tempo de execução (30s, 1 min, etc.)
-                    if (cleanItem.match(/(\d+s|\d+\s*min|\d+\s*segundo|\d+\s*minuto)/i)) {
+                    // Tempo de execução/descanso (30s, 1 min, etc.) - MENOS DESTAQUE  
+                    if (cleanItem.match(/(\d+s|\d+\s*min|\d+\s*segundo|\d+\s*minuto|descanso)/i)) {
                       return (
-                        <div key={itemIndex} className="flex items-center gap-2 ml-4 bg-yellow-50 p-2 rounded border border-yellow-200">
-                          <Clock className="h-4 w-4 text-yellow-600" />
-                          <span className="text-sm font-medium text-yellow-800">{cleanItem}</span>
+                        <div key={itemIndex} className="flex items-center gap-2 ml-8 bg-gray-100 p-2 rounded opacity-60">
+                          <Clock className="h-3 w-3 text-gray-500" />
+                          <span className="text-xs text-gray-600">{cleanItem}</span>
                         </div>
                       )
                     }
                     
-                    // Alongamentos
-                    if (cleanItem.toLowerCase().includes('alongamento')) {
+                    // Alongamentos - MENOS DESTAQUE
+                    if (cleanItem.toLowerCase().includes('alongamento') || cleanItem.toLowerCase().includes('volta à calma')) {
                       return (
-                        <div key={itemIndex} className="bg-purple-50 p-3 rounded-lg ml-4 border border-purple-200">
+                        <div key={itemIndex} className="bg-gray-100 p-2 rounded ml-8 opacity-70">
                           <div className="flex items-start gap-2">
-                            <span className="text-purple-600 mt-0.5">🧜</span>
-                            <span className="text-sm text-purple-800 leading-relaxed">
+                            <span className="text-gray-500 mt-0.5 text-xs">🧘</span>
+                            <span className="text-xs text-gray-600 leading-relaxed">
                               {cleanItem}
                             </span>
                           </div>
@@ -456,10 +496,10 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                       )
                     }
                     
-                    // Texto normal
+                    // Texto normal - MAIOR DESTAQUE (igual aos exercícios)
                     return cleanItem ? (
-                      <div key={itemIndex} className="bg-gray-50 p-2 rounded ml-2 border-l-2 border-gray-300">
-                        <span className="text-sm leading-relaxed text-gray-700">
+                      <div key={itemIndex} className="bg-white p-4 rounded-xl border-2 border-blue-200 shadow-md mb-3">
+                        <span className="font-bold text-gray-900 text-lg leading-relaxed">
                           {cleanItem}
                         </span>
                       </div>
@@ -503,7 +543,7 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                     return (
                       <div key={itemIndex} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                         <span className="font-medium text-sm text-gray-800">{cleanLabel}</span>
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100 font-semibold">
+                        <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100 font-semibold">
                           {cleanValue}
                         </Badge>
                       </div>
@@ -515,7 +555,7 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                     <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-3 py-2 border-b border-gray-100 last:border-b-0">
                       <span className="font-semibold text-sm text-gray-700">{cleanLabel}</span>
                       <div className="md:col-span-2">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+                        <Badge variant="outline" className="bg-gray-50 text-gray-800 border-gray-200">
                           {cleanValue}
                         </Badge>
                       </div>
@@ -538,14 +578,14 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                     borderColor = "border-yellow-400"
                   } else if (text.toLowerCase().includes('exercícios')) {
                     icon = <Dumbbell className="h-4 w-4" />
-                    bgColor = "bg-green-50"
-                    textColor = "text-green-800"
-                    borderColor = "border-green-400"
+                    bgColor = "bg-gray-50"
+                    textColor = "text-gray-800"
+                    borderColor = "border-gray-400"
                   } else if (text.toLowerCase().includes('volta') || text.toLowerCase().includes('calma')) {
                     icon = <Target className="h-4 w-4" />
-                    bgColor = "bg-blue-50"
+                    bgColor = "bg-gray-50"
                     textColor = "text-blue-800"
-                    borderColor = "border-blue-400"
+                    borderColor = "border-gray-400"
                   }
                   
                   return (
@@ -562,7 +602,7 @@ export function WorkoutPlanRenderer({ workoutText }: WorkoutPlanRendererProps) {
                 if (item.startsWith('-') || item.startsWith('•')) {
                   return (
                     <div key={itemIndex} className="flex items-start gap-3 py-2 pl-2">
-                      <span className="text-green-600 mt-0.5 text-lg">•</span>
+                      <span className="text-gray-600 mt-0.5 text-lg">•</span>
                       <span className="text-sm text-gray-700 leading-relaxed">{cleanItem}</span>
                     </div>
                   )
